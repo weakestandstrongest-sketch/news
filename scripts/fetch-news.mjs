@@ -95,7 +95,7 @@ function articleId(url) {
 const SITE_NAMES = {
   'nhk.or.jp': 'NHK', 'web.nhk': 'NHK', 'asahi.com': '朝日新聞', 'mainichi.jp': '毎日新聞',
   'yomiuri.co.jp': '読売新聞', 'nikkei.com': '日本経済新聞', 'sankei.com': '産経新聞', 'jiji.com': '時事通信',
-  'kyodonews.jp': '共同通信', 'tokyo-np.co.jp': '東京新聞', 'bunshun.jp': '文春オンライン',
+  'kyodonews.jp': '共同通信', '47news.jp': '47NEWS', 'tokyo-np.co.jp': '東京新聞', 'bunshun.jp': '文春オンライン',
   'toyokeizai.net': '東洋経済オンライン', 'diamond.jp': 'ダイヤモンド・オンライン', 'itmedia.co.jp': 'ITmedia',
   'impress.co.jp': 'Impress Watch', 'gizmodo.jp': 'GIZMODO', 'bbc.com': 'BBCニュース', 'cnn.co.jp': 'CNN.co.jp',
   'yahoo.co.jp': 'Yahoo!ニュース', 'gigazine.net': 'GIGAZINE', 'publickey1.jp': 'Publickey',
