@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFeed, decodeEntities, stripHtml } from './lib/feed-parser.mjs';
+import { clusterArticles } from './lib/cluster.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.env.NEWS_OUT || resolve(ROOT, 'public/data/news.json'));
@@ -192,7 +193,16 @@ async function main() {
     process.exit(1);
   }
 
-  const data = { generatedAt: new Date().toISOString(), categories };
+  // 複数のメディアが報じている同じ話題をまとめる
+  const topics = clusterArticles([...unique.values()]);
+  for (const t of topics) for (const id of t.articleIds) unique.get(id).topic = t.id;
+  topics.sort((a, b) => b.sources.length - a.sources.length || Date.parse(b.latest || 0) - Date.parse(a.latest || 0));
+  console.log(`\n話題: ${topics.length} 件（2 件以上の記事をまとめたもの）`);
+  for (const t of topics.slice(0, 15)) {
+    console.log(`  ${t.sources.length}社 ${t.articleIds.length}件  ${unique.get(t.articleIds[0]).title}  [${t.sources.join(' / ')}]`);
+  }
+
+  const data = { generatedAt: new Date().toISOString(), categories, topics };
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, JSON.stringify(data));
   console.log(`\n${total} 件の記事を書き出しました → ${OUT}` + (failed.length ? `（失敗したフィード: ${failed.length}）` : ''));

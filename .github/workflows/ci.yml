@@ -1,0 +1,23 @@
+name: チェック
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: RSS を取得（公開はしない）
+        run: npm run fetch
+      - name: 記事データを出力（話題まとめの調整用・一時的）
+        run: node -e "const d=require('./public/data/news.json');const seen=new Set();for(const c of d.categories)for(const a of c.articles){if(seen.has(a.id))continue;seen.add(a.id);console.log('ART\t'+JSON.stringify([a.id,a.source,a.publishedAt,a.title,(a.summary||'').slice(0,100)]))}"

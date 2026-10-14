@@ -11,6 +11,22 @@
         {
           "source": "Yahoo!ニュース",
           "url": "https://news.yahoo.co.jp/rss/topics/top-picks.xml"
+        },
+        {
+          "source": "朝日新聞",
+          "url": "https://www.asahi.com/rss/asahi/newsheadlines.rdf"
+        },
+        {
+          "source": "毎日新聞",
+          "url": "https://mainichi.jp/rss/etc/mainichi-flash.rss"
+        },
+        {
+          "source": "産経新聞",
+          "url": "https://www.sankei.com/arc/outboundfeeds/rss/?outputType=xml"
+        },
+        {
+          "source": "時事通信",
+          "url": "https://www.jiji.com/rss/ranking.rdf"
         }
       ]
     },
@@ -29,6 +45,10 @@
         {
           "source": "東洋経済オンライン",
           "url": "https://toyokeizai.net/list/feed/rss"
+        },
+        {
+          "source": "ダイヤモンド・オンライン",
+          "url": "https://diamond.jp/list/feed/rss/dol"
         }
       ]
     },
@@ -47,6 +67,10 @@
         {
           "source": "GIZMODO",
           "url": "https://www.gizmodo.jp/index.xml"
+        },
+        {
+          "source": "Impress Watch",
+          "url": "https://www.watch.impress.co.jp/data/rss/1.0/ipw/feed.rdf"
         }
       ]
     },
@@ -96,6 +120,18 @@
         {
           "source": "Yahoo!ニュース",
           "url": "https://news.yahoo.co.jp/rss/topics/world.xml"
+        },
+        {
+          "source": "BBCニュース",
+          "url": "https://feeds.bbci.co.uk/japanese/rss.xml"
+        },
+        {
+          "source": "CNN.co.jp",
+          "url": "https://feeds.cnn.co.jp/rss/cnn/cnn.rdf"
+        },
+        {
+          "source": "ニューズウィーク日本版",
+          "url": "https://www.newsweekjapan.jp/story/rss.xml"
         }
       ]
     },
