@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://purl.org/rss/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:hatena="http://www.hatena.ne.jp/info/xmlns#" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel rdf:about="https://b.hatena.ne.jp/hotentry/all">
+<title>はてなブックマーク - 人気エントリー</title>
+<items><rdf:Seq><rdf:li rdf:resource="https://example.org/post"/></rdf:Seq></items>
+</channel>
+<item rdf:about="https://example.org/post">
+<title>個人開発でニュースアプリを作った話</title>
+<link>https://example.org/post</link>
+<description>広告なしで読めるニュースアプリを作りました。</description>
+<content:encoded>&lt;blockquote&gt;&lt;img src=&quot;https://cdn-ak-scissors.b.st-hatena.com/image/square/abc.jpg&quot;&gt;&lt;/blockquote&gt;</content:encoded>
+<dc:date>2026-10-14T07:12:34+09:00</dc:date>
+<hatena:bookmarkcount>512</hatena:bookmarkcount>
+<hatena:imageurl>https://example.org/og.png</hatena:imageurl>
+</item>
+</rdf:RDF>

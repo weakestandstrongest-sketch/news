@@ -1,0 +1,145 @@
+{
+  "categories": [
+    {
+      "id": "top",
+      "label": "トップ",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat0.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/top-picks.xml"
+        }
+      ]
+    },
+    {
+      "id": "business",
+      "label": "経済",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat5.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/business.xml"
+        },
+        {
+          "source": "東洋経済オンライン",
+          "url": "https://toyokeizai.net/list/feed/rss"
+        }
+      ]
+    },
+    {
+      "id": "tech",
+      "label": "テクノロジー",
+      "feeds": [
+        {
+          "source": "ITmedia",
+          "url": "https://rss.itmedia.co.jp/rss/2.0/news_bursts.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/it.xml"
+        },
+        {
+          "source": "GIZMODO",
+          "url": "https://www.gizmodo.jp/index.xml"
+        }
+      ]
+    },
+    {
+      "id": "trend",
+      "label": "話題",
+      "feeds": [
+        {
+          "source": "はてなブックマーク",
+          "url": "https://b.hatena.ne.jp/hotentry/all.rss"
+        }
+      ],
+      "sort": "score"
+    },
+    {
+      "id": "domestic",
+      "label": "国内",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat1.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/domestic.xml"
+        }
+      ]
+    },
+    {
+      "id": "politics",
+      "label": "政治",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat4.xml"
+        }
+      ]
+    },
+    {
+      "id": "world",
+      "label": "国際",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat6.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/world.xml"
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "label": "科学",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat3.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/science.xml"
+        }
+      ]
+    },
+    {
+      "id": "sports",
+      "label": "スポーツ",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat7.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/sports.xml"
+        }
+      ]
+    },
+    {
+      "id": "entertainment",
+      "label": "エンタメ",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat2.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/entertainment.xml"
+        }
+      ]
+    }
+  ]
+}

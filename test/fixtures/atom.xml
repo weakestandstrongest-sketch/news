@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Atom テスト</title>
+<link href="https://example.net/" />
+<entry>
+<title type="html">Atom &amp;amp; エントリー</title>
+<link rel="alternate" type="text/html" href="https://example.net/entry/1" />
+<link rel="enclosure" href="https://example.net/file.mp3" />
+<published>2026-10-13T22:00:00Z</published>
+<summary>概要テキスト</summary>
+</entry>
+</feed>

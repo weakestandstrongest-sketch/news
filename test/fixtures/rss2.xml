@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>テスト RSS</title>
+<atom:link href="https://example.com/rss" rel="self" type="application/rss+xml" />
+<item>
+<title><![CDATA[円相場、一時150円台に　&quot;介入警戒&quot;]]></title>
+<link>https://example.com/a/1?utm_source=rss</link>
+<pubDate>Tue, 14 Oct 2026 09:30:00 +0900</pubDate>
+<description><![CDATA[<p>東京外国為替市場で<b>円安</b>が進んだ。</p><img src="https://example.com/img/1.jpg">]]></description>
+</item>
+<item>
+<title>画像は enclosure</title>
+<link>https://example.com/a/2</link>
+<pubDate>Tue, 14 Oct 2026 08:00:00 +0900</pubDate>
+<description>&lt;p&gt;エンティティ化された&amp;amp;HTML&lt;/p&gt;</description>
+<enclosure url="https://example.com/img/2.jpg" type="image/jpeg" length="0" />
+</item>
+<item>
+<title>リンクなしは除外</title>
+</item>
+</channel>
+</rss>

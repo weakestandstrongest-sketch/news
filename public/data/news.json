@@ -1,0 +1,177 @@
+{
+ "generatedAt": "2026-10-14T16:55:08.351Z",
+ "sample": true,
+ "categories": [
+  {
+   "id": "top",
+   "label": "トップ",
+   "articles": [
+    {
+     "id": "2d426801b6ee",
+     "title": "（サンプル）ここにその日の主要ニュースの見出しが入ります",
+     "url": "https://example.com/top/1",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:51:08.351Z",
+     "summary": "GitHub Actions が 30 分ごとに各社の RSS を取得し、最新の見出しと概要をこの画面に届けます。記事をタップすると概要が表示され、続きは配信元のサイトで読めます。",
+     "image": "data/sample/1.svg"
+    },
+    {
+     "id": "a2da12ed459a",
+     "title": "（サンプル）見出しは明朝体で、紙面のように落ち着いて読めるようにしています",
+     "url": "https://example.com/top/2",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:28:08.351Z",
+     "summary": "日経電子版のような紙面の雰囲気を意識したレイアウトです。",
+     "image": "data/sample/2.svg"
+    },
+    {
+     "id": "d007930decd5",
+     "title": "（サンプル）カテゴリは左右にスワイプして切り替えられます",
+     "url": "https://example.com/top/3",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:05:08.351Z",
+     "summary": "SmartNews のように、上部のタブをタップするか画面を横にスワイプして移動できます。",
+     "image": null
+    },
+    {
+     "id": "e73020dd12cc",
+     "title": "（サンプル）気になった記事はしおりボタンで保存",
+     "url": "https://example.com/top/4",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T15:42:08.351Z",
+     "summary": "NewsPicks のように、保存した記事にはメモを残せます。",
+     "image": "data/sample/3.svg"
+    },
+    {
+     "id": "0d2232a56291",
+     "title": "（サンプル）画面を下に引っ張ると最新のニュースに更新されます",
+     "url": "https://example.com/top/5",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T15:19:08.351Z",
+     "summary": "",
+     "image": null
+    },
+    {
+     "id": "e5af1efc62eb",
+     "title": "（サンプル）設定から文字の大きさやダークモードを変えられます",
+     "url": "https://example.com/top/6",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T14:56:08.351Z",
+     "summary": "",
+     "image": "data/sample/4.svg"
+    },
+    {
+     "id": "202801a47103",
+     "title": "（サンプル）画像を非表示にして、文字だけで読むこともできます",
+     "url": "https://example.com/top/7",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T14:33:08.351Z",
+     "summary": "",
+     "image": null
+    },
+    {
+     "id": "6b41719bdb77",
+     "title": "（サンプル）読んだ記事は見出しが薄く表示されます",
+     "url": "https://example.com/top/8",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T14:10:08.351Z",
+     "summary": "",
+     "image": "data/sample/5.svg"
+    }
+   ]
+  },
+  {
+   "id": "business",
+   "label": "経済",
+   "articles": [
+    {
+     "id": "905bf033f9c3",
+     "title": "（サンプル）経済カテゴリの記事見出し",
+     "url": "https://example.com/business/1",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:44:08.351Z",
+     "summary": "NHK・Yahoo!ニュース・東洋経済オンラインの RSS から取得します。",
+     "image": "data/sample/6.svg"
+    },
+    {
+     "id": "962d38d873e1",
+     "title": "（サンプル）経済カテゴリの記事見出し その2",
+     "url": "https://example.com/business/2",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:21:08.351Z",
+     "summary": "",
+     "image": null
+    },
+    {
+     "id": "d6eba22c00e7",
+     "title": "（サンプル）経済カテゴリの記事見出し その3",
+     "url": "https://example.com/business/3",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T15:58:08.351Z",
+     "summary": "",
+     "image": "data/sample/2.svg"
+    }
+   ]
+  },
+  {
+   "id": "tech",
+   "label": "テクノロジー",
+   "articles": [
+    {
+     "id": "4727e816f111",
+     "title": "（サンプル）テクノロジーカテゴリの記事見出し",
+     "url": "https://example.com/tech/1",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:37:08.351Z",
+     "summary": "ITmedia・Yahoo!ニュース・GIZMODO の RSS から取得します。",
+     "image": "data/sample/3.svg"
+    },
+    {
+     "id": "91b46c457065",
+     "title": "（サンプル）テクノロジーカテゴリの記事見出し その2",
+     "url": "https://example.com/tech/2",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:14:08.351Z",
+     "summary": "",
+     "image": null
+    }
+   ]
+  },
+  {
+   "id": "trend",
+   "label": "話題",
+   "articles": [
+    {
+     "id": "7da1ff08434c",
+     "title": "（サンプル）はてなブックマークで話題の記事",
+     "url": "https://example.com/trend/1",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:30:08.351Z",
+     "summary": "ブックマーク数（users）が多い順に並びます。",
+     "image": "data/sample/4.svg",
+     "score": 1280
+    },
+    {
+     "id": "00823074a130",
+     "title": "（サンプル）話題の記事 その2",
+     "url": "https://example.com/trend/2",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T16:07:08.351Z",
+     "summary": "",
+     "image": null,
+     "score": 642
+    },
+    {
+     "id": "1125f0e82c4b",
+     "title": "（サンプル）話題の記事 その3",
+     "url": "https://example.com/trend/3",
+     "source": "サンプル",
+     "publishedAt": "2026-10-14T15:44:08.351Z",
+     "summary": "",
+     "image": "data/sample/1.svg",
+     "score": 315
+    }
+   ]
+  }
+ ]
+}
