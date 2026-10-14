@@ -141,3 +141,15 @@ export function parseFeed(xml) {
   }
   return items;
 }
+
+// 見出しの後ろに付いたサイト名（「 | 東洋経済オンライン」「：朝日新聞」「 - 日本経済新聞」など）を表示用に取り除く
+const SITE_WORD = /(新聞|通信|ニュース|NEWS|News|オンライン|Online|ONLINE|Watch|ITmedia|日経|Yahoo|BBC|CNN|GIZMODO|Impress)/;
+
+export function cleanTitle(title) {
+  let t = title.trim();
+  const parts = t.split(/\s+[|｜]\s+/);
+  if (parts.length > 1 && parts[0].length >= 8 && SITE_WORD.test(parts[parts.length - 1])) t = parts[0];
+  t = t.replace(/\s+[-–—]\s+([^-–—]{1,20})$/, (m, tail) => (SITE_WORD.test(tail) ? '' : m));
+  t = t.replace(/[：:]\s*([^：:]{1,14})$/, (m, tail) => (SITE_WORD.test(tail) && t.length - m.length >= 8 ? '' : m));
+  return t.trim();
+}

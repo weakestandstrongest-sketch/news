@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseFeed, decodeEntities, stripHtml } from './lib/feed-parser.mjs';
+import { parseFeed, decodeEntities, stripHtml, cleanTitle } from './lib/feed-parser.mjs';
 import { clusterArticles } from './lib/cluster.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -91,9 +91,36 @@ function articleId(url) {
   return createHash('sha1').update(url).digest('hex').slice(0, 12);
 }
 
+// はてなブックマークのような「他サイトの記事を紹介するフィード」では、実際の掲載元の名前を使う
+const SITE_NAMES = {
+  'nhk.or.jp': 'NHK', 'web.nhk': 'NHK', 'asahi.com': '朝日新聞', 'mainichi.jp': '毎日新聞',
+  'yomiuri.co.jp': '読売新聞', 'nikkei.com': '日本経済新聞', 'sankei.com': '産経新聞', 'jiji.com': '時事通信',
+  'kyodonews.jp': '共同通信', 'tokyo-np.co.jp': '東京新聞', 'bunshun.jp': '文春オンライン',
+  'toyokeizai.net': '東洋経済オンライン', 'diamond.jp': 'ダイヤモンド・オンライン', 'itmedia.co.jp': 'ITmedia',
+  'impress.co.jp': 'Impress Watch', 'gizmodo.jp': 'GIZMODO', 'bbc.com': 'BBCニュース', 'cnn.co.jp': 'CNN.co.jp',
+  'yahoo.co.jp': 'Yahoo!ニュース', 'gigazine.net': 'GIGAZINE', 'publickey1.jp': 'Publickey',
+  'huffingtonpost.jp': 'ハフポスト', 'businessinsider.jp': 'Business Insider', 'nikkansports.com': '日刊スポーツ',
+  'president.jp': 'プレジデント', 'gendai.media': '現代ビジネス', 'newsweekjapan.jp': 'ニューズウィーク日本版',
+  'note.com': 'note', 'zenn.dev': 'Zenn', 'qiita.com': 'Qiita', 'github.com': 'GitHub', 'hatenablog.com': 'はてなブログ',
+  'youtube.com': 'YouTube', 'x.com': 'X', 'twitter.com': 'X',
+};
+
+function siteName(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    const key = Object.keys(SITE_NAMES).find((d) => host === d || host.endsWith(`.${d}`));
+    return key ? SITE_NAMES[key] : host;
+  } catch {
+    return null;
+  }
+}
+
 async function loadFeed(feed) {
   const { text } = await fetchText(feed.url);
-  return parseFeed(text).map((item) => ({ ...item, source: feed.source }));
+  return parseFeed(text).map((item) => ({
+    ...item,
+    source: (feed.aggregator && siteName(item.url)) || feed.source,
+  }));
 }
 
 function metaContent(html, prop) {
@@ -161,7 +188,7 @@ async function main() {
       seenTitle.add(tkey);
       articles.push({
         id: articleId(url),
-        title: item.title,
+        title: cleanTitle(item.title),
         url,
         source: item.source,
         publishedAt: item.publishedAt,

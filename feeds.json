@@ -80,7 +80,8 @@
       "feeds": [
         {
           "source": "はてなブックマーク",
-          "url": "https://b.hatena.ne.jp/hotentry/all.rss"
+          "url": "https://b.hatena.ne.jp/hotentry/all.rss",
+          "aggregator": true
         }
       ],
       "sort": "score"
@@ -128,10 +129,6 @@
         {
           "source": "CNN.co.jp",
           "url": "https://feeds.cnn.co.jp/rss/cnn/cnn.rdf"
-        },
-        {
-          "source": "ニューズウィーク日本版",
-          "url": "https://www.newsweekjapan.jp/story/rss.xml"
         }
       ]
     },

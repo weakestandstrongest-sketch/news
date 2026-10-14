@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { parseFeed, stripHtml } from '../scripts/lib/feed-parser.mjs';
+import { parseFeed, stripHtml, cleanTitle } from '../scripts/lib/feed-parser.mjs';
 
 const fixture = (name) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 
@@ -36,4 +36,14 @@ test('Atom: alternate リンクを使う', () => {
 
 test('stripHtml: script を除去し空白を詰める', () => {
   assert.equal(stripHtml('<p>a</p>\n<script>x()</script>  <p>b</p>'), 'a b');
+});
+
+test('cleanTitle: 見出しの後ろのサイト名を除く', () => {
+  assert.equal(cleanTitle('スパイ容疑で記者を拘束 長期化の懸念も | 政治・経済・投資 | 東洋経済オンライン'), 'スパイ容疑で記者を拘束 長期化の懸念も');
+  assert.equal(cleanTitle('簗農水相が辞表提出「これ以上迷惑かけるわけには」：朝日新聞'), '簗農水相が辞表提出「これ以上迷惑かけるわけには」');
+  assert.equal(cleanTitle('阪急電鉄、全車両で中づり広告廃止　27年4月から - 日本経済新聞'), '阪急電鉄、全車両で中づり広告廃止　27年4月から');
+  assert.equal(cleanTitle('千葉豪雨 タクシー水没の事故 詳しい経緯が判明 | NHKニュース'), '千葉豪雨 タクシー水没の事故 詳しい経緯が判明');
+  // サイト名でないものは残す
+  assert.equal(cleanTitle('読む政治:簗農相、疑惑払拭できぬまま辞任'), '読む政治:簗農相、疑惑払拭できぬまま辞任');
+  assert.equal(cleanTitle('A - B 戦の結果'), 'A - B 戦の結果');
 });

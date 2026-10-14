@@ -8,12 +8,13 @@
    "articles": [
     {
      "id": "2d426801b6ee",
-     "title": "（サンプル）ここにその日の主要ニュースの見出しが入ります",
+     "title": "（サンプル）複数のメディアが報じた話題は、ひとつにまとめて表示します",
      "url": "https://example.com/top/1",
-     "source": "サンプル",
+     "source": "サンプル新聞",
      "publishedAt": "2026-10-14T16:51:08.351Z",
-     "summary": "GitHub Actions が 30 分ごとに各社の RSS を取得し、最新の見出しと概要をこの画面に届けます。記事をタップすると概要が表示され、続きは配信元のサイトで読めます。",
-     "image": "data/sample/1.svg"
+     "summary": "同じ出来事を報じた記事を自動でまとめ、「3社が報道」のように表示します。記事を開くと、他のメディアの見出しも並べて読み比べられます。",
+     "image": "data/sample/1.svg",
+     "topic": "t-sample"
     },
     {
      "id": "a2da12ed459a",
@@ -88,10 +89,11 @@
      "id": "905bf033f9c3",
      "title": "（サンプル）経済カテゴリの記事見出し",
      "url": "https://example.com/business/1",
-     "source": "サンプル",
+     "source": "サンプル経済",
      "publishedAt": "2026-10-14T16:44:08.351Z",
      "summary": "NHK・Yahoo!ニュース・東洋経済オンラインの RSS から取得します。",
-     "image": "data/sample/6.svg"
+     "image": "data/sample/6.svg",
+     "topic": "t-sample"
     },
     {
      "id": "962d38d873e1",
@@ -121,10 +123,11 @@
      "id": "4727e816f111",
      "title": "（サンプル）テクノロジーカテゴリの記事見出し",
      "url": "https://example.com/tech/1",
-     "source": "サンプル",
+     "source": "サンプルIT",
      "publishedAt": "2026-10-14T16:37:08.351Z",
      "summary": "ITmedia・Yahoo!ニュース・GIZMODO の RSS から取得します。",
-     "image": "data/sample/3.svg"
+     "image": "data/sample/3.svg",
+     "topic": "t-sample"
     },
     {
      "id": "91b46c457065",
@@ -172,6 +175,22 @@
      "score": 315
     }
    ]
+  }
+ ],
+ "topics": [
+  {
+   "id": "t-sample",
+   "articleIds": [
+    "2d426801b6ee",
+    "905bf033f9c3",
+    "4727e816f111"
+   ],
+   "sources": [
+    "サンプル新聞",
+    "サンプル経済",
+    "サンプルIT"
+   ],
+   "latest": "2026-10-14T16:51:08.351Z"
   }
  ]
 }

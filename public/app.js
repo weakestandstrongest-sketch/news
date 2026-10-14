@@ -3,6 +3,7 @@ const DATA_URL = 'data/news.json';
 const PREFIX = 'mynews:';
 const AUTO_REFRESH_MS = 10 * 60 * 1000;
 const TOP_LIMIT = 15;
+const TOP_TOPICS = 8;
 const MAX_READ_HISTORY = 2000;
 
 /* ---------- 保存領域 ---------- */
@@ -25,6 +26,7 @@ const DEFAULT_SETTINGS = { theme: 'auto', fontSize: 'medium', images: true, dimR
 const state = {
   data: null,
   index: new Map(), // id -> { article, category }
+  topics: new Map(), // id -> { id, articles, sources, latest }
   settings: { ...DEFAULT_SETTINGS, ...store.get('settings', {}) },
   saved: store.get('saved', {}), // id -> { article, category, savedAt, memo }
   read: new Set(store.get('read', [])),
@@ -109,11 +111,50 @@ function lookup(id) {
   return state.index.get(id) || state.saved[id] || null;
 }
 
+/* ---------- 話題（複数メディアが報じた同じニュース） ---------- */
+function topicOf(a) {
+  const t = a?.topic ? state.topics.get(a.topic) : null;
+  return t && t.sources.length > 1 ? t : null;
+}
+
+function sourcesText(t, max = 3) {
+  const rest = t.sources.length - max;
+  return t.sources.slice(0, max).join('・') + (rest > 0 ? ` ほか${rest}社` : '');
+}
+
+// 話題の代表記事：画像があり、概要が詳しいものを優先
+function leadOf(t) {
+  return [...t.articles].sort((a, b) =>
+    (b.image ? 1 : 0) - (a.image ? 1 : 0) || (b.summary?.length || 0) - (a.summary?.length || 0))[0];
+}
+
+// 同じ話題の記事は一覧に 1 回だけ出す
+function collapseTopics(list, shownTopics = new Set()) {
+  return list.filter((a) => {
+    const t = topicOf(a);
+    if (!t) return true;
+    if (shownTopics.has(t.id)) return false;
+    shownTopics.add(t.id);
+    return true;
+  });
+}
+
+// 報じたメディアが多く、新しい話題ほど上に
+function rankedTopics() {
+  const base = Date.parse(state.data?.generatedAt) || Date.now();
+  const score = (t) => t.sources.length - (base - (Date.parse(t.latest) || base)) / 3600_000 / 8;
+  return [...state.topics.values()]
+    .filter((t) => t.sources.length > 1)
+    .sort((a, b) => score(b) - score(a));
+}
+
 /* ---------- 記事の HTML ---------- */
 function metaHtml(a) {
   const parts = [`<span class="source">${esc(a.source)}</span>`];
   if (a.publishedAt) parts.push(`<time datetime="${esc(a.publishedAt)}">${relTime(a.publishedAt)}</time>`);
   if (a.score) parts.push(`<span class="pick">${a.score.toLocaleString()} users</span>`);
+  const t = topicOf(a);
+  if (t) parts.push(`<span class="coverage">${t.sources.length}社が報道</span>`);
   if (state.saved[a.id]) parts.push('<span class="saved-mark">保存済み</span>');
   return `<div class="meta">${parts.join('')}</div>`;
 }
@@ -133,6 +174,7 @@ function heroHtml(a) {
     <h2 class="hero-title">${esc(a.title)}</h2>
     ${a.summary ? `<p class="hero-summary">${esc(a.summary)}</p>` : ''}
     ${metaHtml(a)}
+    ${topicOf(a) ? `<p class="coverage-line">${esc(sourcesText(topicOf(a)))}が報じています</p>` : ''}
   </a>`;
 }
 
@@ -176,19 +218,45 @@ function categoryHtml(cat, isTop) {
     return html + emptyHtml(ICON_CLOUD, 'このカテゴリの記事を取得できませんでした。<br>しばらくしてから更新してください。');
   }
 
-  const list = isTop ? cat.articles.slice(0, TOP_LIMIT) : cat.articles;
-  const [first, ...rest] = list;
-  html += heroHtml(first);
-  rest.forEach((a, i) => {
-    html += a.image && (i + 1) % 7 === 0 ? featureHtml(a) : rowHtml(a);
-  });
+  const shownTopics = new Set();
+  let list;
+  if (isTop) {
+    list = [];
+    // いちばん多くのメディアが報じている話題をトップに、続けて主な話題を並べる
+    const topics = rankedTopics().slice(0, TOP_TOPICS + 1);
+    if (topics.length) {
+      topics.forEach((t) => shownTopics.add(t.id));
+      const leads = topics.map(leadOf);
+      list.push(...leads);
+      html += heroHtml(leads[0]);
+      if (leads.length > 1) {
+        html += `<div class="section"><div class="section-head"><h3>多くのメディアが報じている話題</h3></div>
+          ${leads.slice(1).map((a) => rowHtml(a)).join('')}</div>`;
+      }
+    }
+    const latest = collapseTopics(cat.articles, shownTopics).slice(0, TOP_LIMIT);
+    list.push(...latest);
+    if (latest.length) {
+      if (topics.length) html += `<div class="section"><div class="section-head"><h3>最新のニュース</h3></div>`;
+      else html += heroHtml(latest.shift());
+      html += latest.map((a) => rowHtml(a)).join('');
+      if (topics.length) html += '</div>';
+    }
+  } else {
+    list = collapseTopics(cat.articles, shownTopics);
+    const [first, ...rest] = list;
+    html += heroHtml(first);
+    rest.forEach((a, i) => {
+      html += a.image && (i + 1) % 7 === 0 ? featureHtml(a) : rowHtml(a);
+    });
+  }
 
   if (isTop) {
     // 日経のトップ面のように、各カテゴリの主な見出しを並べる
     const shown = new Set(list.map((a) => a.id));
     for (const other of visibleCategories()) {
       if (other.id === cat.id) continue;
-      const picks = other.articles.filter((a) => !shown.has(a.id)).slice(0, 3);
+      const picks = collapseTopics(other.articles.filter((a) => !shown.has(a.id)), shownTopics).slice(0, 3);
       if (!picks.length) continue;
       picks.forEach((a) => shown.add(a.id));
       html += `<div class="section">
@@ -346,6 +414,11 @@ function buildIndex() {
       if (!state.index.has(a.id)) state.index.set(a.id, { article: a, category: cat.label });
     }
   }
+  state.topics.clear();
+  for (const t of state.data.topics || []) {
+    const articles = t.articleIds.map((id) => state.index.get(id)?.article).filter(Boolean);
+    if (articles.length > 1) state.topics.set(t.id, { ...t, articles, sources: [...new Set(articles.map((a) => a.source))] });
+  }
 }
 
 async function fetchData() {
@@ -426,7 +499,27 @@ function refreshMetaFor(id) {
 function relatedFor(id) {
   if (!state.data) return [];
   const cat = state.data.categories.find((c) => c.articles.some((a) => a.id === id));
-  return cat ? cat.articles.filter((a) => a.id !== id).slice(0, 5) : [];
+  if (!cat) return [];
+  const own = topicOf(state.index.get(id)?.article);
+  // 同じ話題の記事は「この話題を報じたメディア」に出すので除く
+  const shown = new Set(own ? [own.id] : []);
+  return collapseTopics(cat.articles.filter((a) => a.id !== id), shown).slice(0, 5);
+}
+
+// 同じ話題を報じた他のメディアの記事（Google ニュースの「すべての記事」のように）
+function coverageHtml(a) {
+  const t = topicOf(a);
+  if (!t) return '';
+  const others = t.articles
+    .filter((o) => o.id !== a.id)
+    .sort((x, y) => (Date.parse(y.publishedAt) || 0) - (Date.parse(x.publishedAt) || 0));
+  return `<section class="cov">
+    <h2 class="cov-title">この話題を報じたメディア<span>${t.sources.length}社・${t.articles.length}件</span></h2>
+    ${others.map((o) => `<a class="cov-item tap${readClass(o)}" href="${esc(safeUrl(o.url))}" data-article="${o.id}">
+      <div class="cov-source">${esc(o.source)}${o.publishedAt ? `<time>${relTime(o.publishedAt)}</time>` : ''}</div>
+      <div class="cov-head">${esc(o.title)}</div>
+    </a>`).join('')}
+  </section>`;
 }
 
 function renderReader(id) {
@@ -451,6 +544,7 @@ function renderReader(id) {
         : '<p class="reader-summary is-empty">この記事の概要はありません。元の記事でお読みください。</p>'}
       <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">${esc(a.source)}で続きを読む ${ICON_EXTERNAL}</a>
       <p class="reader-note">配信元のサイトが開きます</p>
+      ${coverageHtml(a)}
       <div class="memo">
         <label for="memo">メモ</label>
         <textarea id="memo" placeholder="気づいたこと・考えたことを残せます（書くと自動で保存されます）">${esc(saved?.memo || '')}</textarea>
