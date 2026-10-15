@@ -1334,3 +1334,27 @@ mark {
 
 .setting-help ol { margin: 8px 0 0; padding-left: 1.4em; }
 .setting-help p { margin: 8px 0 0; color: var(--ink-3); }
+
+/* ===== 有料・会員限定 ===== */
+.paywall {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--pick);
+}
+
+.reader-paywall {
+  margin: 20px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--pick);
+  border-radius: 4px;
+  background: var(--sunken);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}

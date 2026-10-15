@@ -26,7 +26,7 @@ const store = {
 // openWith: 記事を開く方法（ask: 毎回選ぶ / nagi: 凪の中で開く / comet: Comet で開く）
 const DEFAULT_SETTINGS = {
   theme: 'auto', fontSize: 'medium', images: true, dimRead: true, tabs: null, tabsHidden: [],
-  openWith: 'ask', cometShortcut: 'Cometで開く',
+  openWith: 'ask', cometShortcut: 'Cometで開く', showPaid: true,
 };
 const FIXED_TAB = 'top'; // トップは非表示にできない
 
@@ -162,6 +162,7 @@ function sourcesText(t, max = 3) {
 // 話題の代表記事：画像があり、概要が詳しいものを優先
 function leadOf(t) {
   return [...t.articles].sort((a, b) =>
+    (a.access ? 1 : 0) - (b.access ? 1 : 0) ||
     (b.image ? 1 : 0) - (a.image ? 1 : 0) || (b.summary?.length || 0) - (a.summary?.length || 0))[0];
 }
 
@@ -186,8 +187,17 @@ function rankedTopics() {
 }
 
 /* ---------- 記事の HTML ---------- */
+// 有料・会員限定の記事（取得時に記事ページから判定した結果）
+const ACCESS_LABEL = { paid: '有料', members: '会員限定' };
+
+function visibleArticles(list) {
+  return state.settings.showPaid ? list : list.filter((a) => !a.access);
+}
+
 function metaHtml(a) {
-  const parts = [`<span class="source">${esc(a.source)}</span>`];
+  const parts = [];
+  if (a.access) parts.push(`<span class="paywall">${ACCESS_LABEL[a.access]}</span>`);
+  parts.push(`<span class="source">${esc(a.source)}</span>`);
   if (a.publishedAt) parts.push(`<time datetime="${esc(a.publishedAt)}">${relTime(a.publishedAt)}</time>`);
   if (a.score) parts.push(`<span class="pick">${a.score.toLocaleString()} users</span>`);
   const t = topicOf(a);
@@ -315,7 +325,7 @@ function categoryHtml(cat, isTop) {
           ${leads.slice(1).map((a) => rowHtml(a)).join('')}</div>`;
       }
     }
-    const latest = collapseTopics(cat.articles, shownTopics).slice(0, TOP_LIMIT);
+    const latest = collapseTopics(visibleArticles(cat.articles), shownTopics).slice(0, TOP_LIMIT);
     list.push(...latest);
     if (latest.length) {
       if (topics.length) html += `<div class="section"><div class="section-head"><h3>最新のニュース</h3></div>`;
@@ -324,7 +334,8 @@ function categoryHtml(cat, isTop) {
       if (topics.length) html += '</div>';
     }
   } else {
-    list = collapseTopics(cat.articles, shownTopics);
+    list = collapseTopics(visibleArticles(cat.articles), shownTopics);
+    if (!list.length) return html + emptyHtml(ICON_CLOUD, '無料で読める記事はありませんでした。<br>設定で「有料・会員限定の記事も表示」をオンにすると表示されます。');
     const [first, ...rest] = list;
     html += heroHtml(first);
     rest.forEach((a, i) => {
@@ -337,7 +348,7 @@ function categoryHtml(cat, isTop) {
     const shown = new Set(list.map((a) => a.id));
     for (const other of visibleCategories()) {
       if (other.id === cat.id || other.type === 'topics') continue;
-      const picks = collapseTopics(other.articles.filter((a) => !shown.has(a.id)), shownTopics).slice(0, 3);
+      const picks = collapseTopics(visibleArticles(other.articles).filter((a) => !shown.has(a.id)), shownTopics).slice(0, 3);
       if (!picks.length) continue;
       picks.forEach((a) => shown.add(a.id));
       html += `<div class="section">
@@ -619,7 +630,7 @@ function relatedFor(id) {
   const own = topicOf(state.index.get(id)?.article);
   // 同じ話題の記事は「この話題を報じたメディア」に出すので除く
   const shown = new Set(own ? [own.id] : []);
-  return collapseTopics(cat.articles.filter((a) => a.id !== id), shown).slice(0, 5);
+  return collapseTopics(visibleArticles(cat.articles).filter((a) => a.id !== id), shown).slice(0, 5);
 }
 
 // 同じ話題を報じた他のメディアの記事（Google ニュースの「すべての記事」のように）
@@ -660,6 +671,7 @@ function renderReader(id) {
         ? `<p class="reader-summary">${esc(a.summary)}</p>`
         : '<p class="reader-summary is-empty">この記事の概要はありません。元の記事でお読みください。</p>'}
       <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer" data-open-external>${a.book ? '本の詳しい情報を見る' : `${esc(a.source)}で続きを読む`} ${ICON_EXTERNAL}</a>
+      ${a.access ? `<p class="reader-paywall">${a.access === 'paid' ? 'この記事は有料記事です。続きを読むには配信元の購読（有料会員）が必要な場合があります。' : 'この記事は会員限定です。続きを読むには配信元への会員登録やログインが必要な場合があります。'}</p>` : ''}
       <p class="reader-note">${{ ask: '凪の中か Comet かを選んで開きます', nagi: '凪の中で配信元のサイトが開きます', comet: 'Comet で配信元のサイトが開きます' }[state.settings.openWith] || ''}</p>
       ${coverageHtml(a)}
       <div class="memo">
@@ -1038,6 +1050,7 @@ function renderSettings() {
         <div class="setting"><span>テーマ</span>${segmented('theme', [['auto', '自動'], ['light', 'ライト'], ['dark', 'ダーク']])}</div>
         <div class="setting"><span>画像を表示</span>${switchHtml('data-toggle="images"', s.images, '画像を表示')}</div>
         <div class="setting"><span>既読の記事を薄くする</span>${switchHtml('data-toggle="dimRead"', s.dimRead, '既読の記事を薄くする')}</div>
+        <div class="setting"><span>有料・会員限定の記事も表示</span>${switchHtml('data-toggle="showPaid"', s.showPaid, '有料・会員限定の記事も表示')}</div>
       </div>
     </div>
     <div class="settings-group">
