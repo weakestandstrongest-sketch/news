@@ -11,6 +11,12 @@ const SITE_RULES = [
   { host: 'asahi.com', access: 'paid', test: />有料記事</ },
   // 東洋経済：構造化データでも判定できるが、見出しの「有料会員限定」も見る
   { host: 'toyokeizai.net', access: 'paid', test: /article-heading__member[^"]*--paid-lock/ },
+  // 毎日新聞：本文の途中に「この記事は有料記事です。残り○文字（全文○文字）」の案内
+  { host: 'mainichi.jp', access: 'paid', test: /この記事は有料記事です|class="[^"]*\bpaywallpanel\b/ },
+  // プレジデントオンライン：本文の途中に「無料会員登録」で続きを読む案内（登録すれば読める）
+  { host: 'president.jp', access: 'members', test: />\s*無料会員登録\s*</ },
+  // Business Insider Japan：米 BI の有料記事を翻訳した「PREMIUM翻訳β」
+  { host: 'businessinsider.jp', access: 'paid', test: />\s*PREMIUM翻訳β\s*</ },
 ];
 
 function hostOf(url) {
