@@ -761,7 +761,14 @@ function openInNagi(url) {
 }
 
 function openInComet(url) {
-  location.href = cometUrl(url);
+  const target = cometUrl(url);
+  // ひび手帳などの中（iframe）で開かれているときは、iframe の中からはショートカットを起動できない（iOS が止める）。
+  // 同じサイトならいちばん外の画面で開き、別のサイトなら外の画面に頼む
+  if (window.top !== window) {
+    try { window.top.location.href = target; return; } catch (e) { /* 別のサイトの中 */ }
+    try { window.parent.postMessage({ type: 'nagi:open-url', url: target }, '*'); return; } catch (e) { /* 親がいない */ }
+  }
+  location.href = target;
 }
 
 const sheet = $('#open-sheet');
