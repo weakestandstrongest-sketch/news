@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { parseFeed, decodeEntities, stripHtml, cleanTitle } from './lib/feed-parser.mjs';
 import { clusterArticles } from './lib/cluster.mjs';
 import { buildBooks } from './lib/books.mjs';
+import { detectAccess } from './lib/paywall.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.env.NEWS_OUT || resolve(ROOT, 'public/data/news.json'));
@@ -14,7 +15,7 @@ const FEEDS = resolve(process.env.FEEDS_FILE || resolve(ROOT, 'feeds.json'));
 
 const MAX_PER_CATEGORY = 40;
 const MAX_SUMMARY = 160;
-const MAX_OG_FETCH = 250;
+const MAX_PAGE_FETCH = 400;
 const UA = 'Mozilla/5.0 (compatible; PersonalNewsReader/1.0)';
 
 async function fetchText(url, { timeout = 15000, maxBytes = Infinity } = {}) {
@@ -140,30 +141,52 @@ function metaContent(html, prop) {
   return m ? decodeEntities(m[2] ?? m[3]) : null;
 }
 
-// RSS に画像や概要がない記事は、記事ページの OGP から補う
-async function enrichWithOgp(articles) {
-  const targets = articles.filter((a) => !a.image || a.summary.length < 20).slice(0, MAX_OG_FETCH);
+// 記事ページを見て、RSS にない画像・概要を OGP から補い、有料・会員限定かを判定する。
+// 前回の公開データで確認済みの記事は、その結果を使い回して配信元への負荷を抑える
+async function inspectArticles(articles, previous) {
+  const prev = new Map();
+  for (const c of previous?.categories || []) for (const a of c.articles) if (a.checked) prev.set(a.id, a);
+
+  const targets = [];
+  let reused = 0;
+  for (const a of articles) {
+    const p = prev.get(a.id);
+    if (p) {
+      if (!a.image && p.image) a.image = p.image;
+      if (a.summary.length < 20 && p.summary) a.summary = p.summary;
+      if (p.access) a.access = p.access;
+      a.checked = true;
+      reused++;
+    } else {
+      targets.push(a);
+    }
+  }
+
   let ok = 0;
-  const queue = [...targets];
+  const queue = targets.slice(0, MAX_PAGE_FETCH);
   const worker = async () => {
     while (queue.length) {
       const a = queue.shift();
       try {
-        const { text, finalUrl } = await fetchText(a.url, { timeout: 8000, maxBytes: 300_000 });
+        const { text, finalUrl } = await fetchText(a.url, { timeout: 8000, maxBytes: 600_000 });
         const head = text.split(/<\/head>/i)[0];
         if (!a.image) a.image = toHttps(metaContent(head, 'og:image') || metaContent(head, 'twitter:image'), finalUrl);
         if (a.summary.length < 20) {
           const desc = metaContent(head, 'og:description') || metaContent(head, 'description');
           if (desc) a.summary = truncate(stripHtml(desc), MAX_SUMMARY);
         }
+        const access = detectAccess(text, finalUrl || a.url);
+        if (access) a.access = access;
+        a.checked = true;
         ok++;
       } catch {
-        // 取れなければそのまま
+        // 取れなければ次回また確認する
       }
     }
   };
   await Promise.all(Array.from({ length: 10 }, worker));
-  console.log(`OGP: ${ok}/${targets.length} 件を補完`);
+  const restricted = articles.filter((a) => a.access).length;
+  console.log(`記事ページ: 新しく ${ok}/${targets.length} 件を確認、${reused} 件は前回の結果を利用（有料・会員限定 ${restricted} 件）`);
 }
 
 // 前回公開したデータ（1 日以内のもの）。GitHub Actions では PREVIOUS_DATA_URL に公開先の URL が入る
@@ -277,7 +300,7 @@ async function main() {
   // 同じ記事が複数カテゴリにある場合も OGP 取得は一度だけにする
   const unique = new Map();
   for (const c of categories) for (const a of c.articles) if (!unique.has(a.id)) unique.set(a.id, a);
-  await enrichWithOgp([...unique.values()]);
+  await inspectArticles([...unique.values()], previous);
   for (const c of categories) c.articles = c.articles.map((a) => unique.get(a.id));
 
   const total = unique.size;
