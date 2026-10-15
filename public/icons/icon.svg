@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1f3f6b"/>
-  <rect x="112" y="128" width="288" height="256" rx="10" fill="none" stroke="#f6f4ef" stroke-width="18"/>
-  <rect x="148" y="166" width="216" height="40" rx="4" fill="#f6f4ef"/>
-  <path d="M148 254h96M148 296h96M148 338h96M280 254h84M280 296h84M280 338h56" stroke="#f6f4ef" stroke-width="14" stroke-linecap="round"/>
+  <!-- 凪：Noto Serif JP（SIL Open Font License）の字形をパスに変換 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#24497a"/>
+      <stop offset="1" stop-color="#14304f"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <path transform="translate(103.72 345.77) scale(0.30501 -0.30501)" fill="#f6f4ef" d="M304 534V28H183L191 -1H771C785 -1 795 4 798 15C762 50 700 102 700 102L646 28H560V372H712C726 372 736 377 739 388C706 420 651 466 651 466L604 401H560V641C586 645 594 655 596 669L471 682V28H387V498C408 502 416 510 418 523ZM149 775V542C149 338 137 109 26 -77L39 -86C229 91 242 354 242 543V746H756C751 447 753 104 851 -22C879 -65 923 -96 961 -72C978 -60 976 -25 956 26L970 201L959 203C950 165 940 127 928 91C923 77 918 76 910 86C844 169 839 518 852 728C875 732 890 739 896 747L796 832L744 775H258L149 821Z"/>
+  <path d="M146 416h220" stroke="#f6f4ef" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+  <path d="M196 438h120" stroke="#f6f4ef" stroke-width="5" stroke-linecap="round" opacity=".28"/>
 </svg>

@@ -1,4 +1,4 @@
-// My News — 広告のない個人用ニュースリーダー
+// 凪（Nagi）— 広告のない個人用ニュースリーダー
 const DATA_URL = 'data/news.json';
 const PREFIX = 'mynews:';
 const AUTO_REFRESH_MS = 10 * 60 * 1000;
