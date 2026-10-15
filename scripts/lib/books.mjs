@@ -32,6 +32,15 @@ export function findIsbns(html) {
   return set;
 }
 
+// 図書館式の「木下,勝寿,1968-」を「木下勝寿」のように読みやすくする
+export function cleanAuthor(author = '') {
+  return author
+    .split(/\s+/)
+    .map((name) => name.replace(/,\s*\d{4}-(\d{4})?/g, '').replace(/,/g, ''))
+    .filter(Boolean)
+    .join('、');
+}
+
 function jstDate(d = new Date()) {
   return new Date(d.getTime() + 9 * 3600_000).toISOString().slice(0, 10);
 }
@@ -108,7 +117,7 @@ export async function buildBooks(articles, { sources, fetchText, metaContent, pr
     const { from } = candidates.get(isbn);
     books.push({
       id: `book-${isbn}`,
-      title: summary.title.replace(/\s+/g, ' ').trim(),
+      title: summary.title.replace(/\s+/g, ' ').replace(/\s*:\s*/g, '　').trim(),
       url,
       source: '版元ドットコム',
       publishedAt: null,
@@ -116,7 +125,7 @@ export async function buildBooks(articles, { sources, fetchText, metaContent, pr
       image: cover,
       book: {
         isbn,
-        author: (summary.author || '').replace(/\s+/g, ' ').trim(),
+        author: cleanAuthor(summary.author),
         publisher: summary.publisher || '',
         pubdate: summary.pubdate ? summary.pubdate.replace(/^(\d{4})-?(\d{2}).*/, '$1/$2') : '',
         ...(from && { from: { id: from.id, title: from.title, url: from.url, source: from.source } }),

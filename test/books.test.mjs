@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findIsbns } from '../scripts/lib/books.mjs';
+import { findIsbns, cleanAuthor } from '../scripts/lib/books.mjs';
 
 test('findIsbns: ISBN-13 と Amazon のリンク（ISBN-10）を拾う', () => {
   const html = `
@@ -14,4 +14,11 @@ test('findIsbns: ISBN-13 と Amazon のリンク（ISBN-10）を拾う', () => {
   assert.ok(isbns.has('9784492123454'));
   // チェックディジットが合わない数字列は無視する
   assert.ok(!isbns.has('9781234567890'));
+});
+
+test('cleanAuthor: 図書館式の著者名を読みやすくする', () => {
+  assert.equal(cleanAuthor('木下,勝寿,1968-'), '木下勝寿');
+  assert.equal(cleanAuthor('Tomy,1978-'), 'Tomy');
+  assert.equal(cleanAuthor('クリス・ギレボー 児島修'), 'クリス・ギレボー、児島修');
+  assert.equal(cleanAuthor('伊藤明子'), '伊藤明子');
 });
