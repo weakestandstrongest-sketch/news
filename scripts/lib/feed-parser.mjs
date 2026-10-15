@@ -114,7 +114,7 @@ function parseItem(block, isAtom) {
   }
 
   const contentHtml = firstTag(block, ['content:encoded', 'content']);
-  const descHtml = firstTag(block, ['description', 'summary']);
+  const descHtml = firstTag(block, ['description', 'summary', 'media:description']);
   const summary = cleanText(descHtml) || cleanText(contentHtml);
 
   const date = parseDate(firstTag(block, ['pubDate', 'dc:date', 'published', 'updated', 'issued']));

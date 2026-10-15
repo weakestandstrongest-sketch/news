@@ -13,7 +13,7 @@ const FEEDS = resolve(process.env.FEEDS_FILE || resolve(ROOT, 'feeds.json'));
 
 const MAX_PER_CATEGORY = 40;
 const MAX_SUMMARY = 160;
-const MAX_OG_FETCH = 150;
+const MAX_OG_FETCH = 250;
 const UA = 'Mozilla/5.0 (compatible; PersonalNewsReader/1.0)';
 
 async function fetchText(url, { timeout = 15000, maxBytes = Infinity } = {}) {
@@ -154,8 +154,22 @@ async function enrichWithOgp(articles) {
       }
     }
   };
-  await Promise.all(Array.from({ length: 8 }, worker));
+  await Promise.all(Array.from({ length: 10 }, worker));
   console.log(`OGP: ${ok}/${targets.length} 件を補完`);
+}
+
+function toArticle(item) {
+  const url = normalizeUrl(item.url);
+  return {
+    id: articleId(url),
+    title: cleanTitle(item.title),
+    url,
+    source: item.source,
+    publishedAt: item.publishedAt,
+    summary: truncate(item.summary, MAX_SUMMARY),
+    image: toHttps(item.image, url),
+    ...(item.score != null && { score: item.score }),
+  };
 }
 
 async function main() {
@@ -170,10 +184,10 @@ async function main() {
       return false;
     }
   };
-  const categories = [];
-
+  // 1. 各カテゴリのフィードを取得
+  const feedArticles = new Map();
   for (const cat of config.categories) {
-    const results = await Promise.allSettled(cat.feeds.map(loadFeed));
+    const results = await Promise.allSettled((cat.feeds || []).map(loadFeed));
     const items = [];
     results.forEach((r, i) => {
       const feed = cat.feeds[i];
@@ -185,26 +199,27 @@ async function main() {
         failed.push(feed.url);
       }
     });
+    feedArticles.set(cat.id, items.map(toArticle));
+  }
+
+  // 2. キーワードを指定したカテゴリは、取得した全記事から見出しが合うものも集める
+  //    （「決算」「学生・就活」のように専用の RSS がない分野のため）
+  const pool = [...feedArticles.values()].flat();
+  const categories = [];
+  for (const cat of config.categories) {
+    const keywords = (cat.keywords || []).map((k) => k.toLowerCase());
+    const matched = keywords.length ? pool.filter((a) => keywords.some((k) => a.title.toLowerCase().includes(k))) : [];
+    if (keywords.length) console.log(`  [${cat.label}] キーワードに合う記事: ${matched.length} 件`);
 
     const seenUrl = new Set();
     const seenTitle = new Set();
     const articles = [];
-    for (const item of items) {
-      const url = normalizeUrl(item.url);
-      const tkey = titleKey(item.title);
-      if (seenUrl.has(url) || seenTitle.has(tkey)) continue;
-      seenUrl.add(url);
+    for (const a of [...feedArticles.get(cat.id), ...matched]) {
+      const tkey = titleKey(a.title);
+      if (seenUrl.has(a.url) || seenTitle.has(tkey)) continue;
+      seenUrl.add(a.url);
       seenTitle.add(tkey);
-      articles.push({
-        id: articleId(url),
-        title: cleanTitle(item.title),
-        url,
-        source: item.source,
-        publishedAt: item.publishedAt,
-        summary: truncate(item.summary, MAX_SUMMARY),
-        image: toHttps(item.image, url),
-        ...(item.score != null && { score: item.score }),
-      });
+      articles.push(a);
     }
 
     if (cat.sort === 'score') {
@@ -214,7 +229,13 @@ async function main() {
       articles.sort((a, b) => (b.publishedAt ? Date.parse(b.publishedAt) : 0) - (a.publishedAt ? Date.parse(a.publishedAt) : 0));
     }
 
-    categories.push({ id: cat.id, label: cat.label, articles: articles.slice(0, MAX_PER_CATEGORY) });
+    categories.push({
+      id: cat.id,
+      label: cat.label,
+      ...(cat.type && { type: cat.type }),
+      ...(cat.visible === false && { visible: false }),
+      articles: articles.slice(0, MAX_PER_CATEGORY),
+    });
   }
 
   // 同じ記事が複数カテゴリにある場合も OGP 取得は一度だけにする

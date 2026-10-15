@@ -34,8 +34,94 @@
       ]
     },
     {
+      "id": "hot",
+      "label": "🔥HOT",
+      "sort": "score",
+      "feeds": [
+        {
+          "source": "はてなブックマーク",
+          "url": "https://b.hatena.ne.jp/hotentry/all.rss",
+          "aggregator": true
+        }
+      ]
+    },
+    {
+      "id": "world",
+      "label": "ワールド",
+      "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat6.xml"
+        },
+        {
+          "source": "Yahoo!ニュース",
+          "url": "https://news.yahoo.co.jp/rss/topics/world.xml"
+        },
+        {
+          "source": "BBCニュース",
+          "url": "https://feeds.bbci.co.uk/japanese/rss.xml"
+        },
+        {
+          "source": "CNN.co.jp",
+          "url": "https://feeds.cnn.co.jp/rss/cnn/cnn.rdf"
+        }
+      ]
+    },
+    {
+      "id": "earnings",
+      "label": "決算",
+      "feeds": [],
+      "keywords": [
+        "決算",
+        "最高益",
+        "増益",
+        "減益",
+        "増収",
+        "減収",
+        "赤字",
+        "黒字",
+        "上方修正",
+        "下方修正",
+        "純利益",
+        "営業利益",
+        "経常利益",
+        "業績予想",
+        "業績"
+      ]
+    },
+    {
       "id": "business",
-      "label": "経済",
+      "label": "ビジネス",
+      "feeds": [
+        {
+          "source": "東洋経済オンライン",
+          "url": "https://toyokeizai.net/list/feed/rss"
+        },
+        {
+          "source": "ダイヤモンド・オンライン",
+          "url": "https://diamond.jp/list/feed/rss/dol"
+        },
+        {
+          "source": "プレジデント",
+          "url": "https://president.jp/list/rss"
+        },
+        {
+          "source": "Business Insider",
+          "url": "https://www.businessinsider.jp/feed/index.xml"
+        },
+        {
+          "source": "現代ビジネス",
+          "url": "https://gendai.media/list/feed/rss"
+        },
+        {
+          "source": "ITmedia ビジネス",
+          "url": "https://rss.itmedia.co.jp/rss/2.0/business.xml"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "label": "金融・経済",
       "feeds": [
         {
           "source": "NHK",
@@ -44,15 +130,28 @@
         {
           "source": "Yahoo!ニュース",
           "url": "https://news.yahoo.co.jp/rss/topics/business.xml"
-        },
-        {
-          "source": "東洋経済オンライン",
-          "url": "https://toyokeizai.net/list/feed/rss"
-        },
-        {
-          "source": "ダイヤモンド・オンライン",
-          "url": "https://diamond.jp/list/feed/rss/dol"
         }
+      ],
+      "keywords": [
+        "日銀",
+        "金利",
+        "利上げ",
+        "利下げ",
+        "株価",
+        "日経平均",
+        "東証",
+        "為替",
+        "円安",
+        "円高",
+        "物価",
+        "インフレ",
+        "GDP",
+        "景気",
+        "国債",
+        "金融",
+        "NISA",
+        "投資信託",
+        "賃上げ"
       ]
     },
     {
@@ -74,25 +173,53 @@
         {
           "source": "Impress Watch",
           "url": "https://www.watch.impress.co.jp/data/rss/1.0/ipw/feed.rdf"
+        },
+        {
+          "source": "Publickey",
+          "url": "https://www.publickey1.jp/atom.xml"
+        },
+        {
+          "source": "GIGAZINE",
+          "url": "https://gigazine.net/news/rss_2.0/"
+        },
+        {
+          "source": "はてなブックマーク",
+          "url": "https://b.hatena.ne.jp/hotentry/it.rss",
+          "aggregator": true
         }
       ]
     },
     {
-      "id": "trend",
-      "label": "話題",
+      "id": "startup",
+      "label": "スタートアップ",
       "feeds": [
         {
-          "source": "はてなブックマーク",
-          "url": "https://b.hatena.ne.jp/hotentry/all.rss",
-          "aggregator": true
+          "source": "BRIDGE",
+          "url": "https://thebridge.jp/feed"
         }
       ],
-      "sort": "score"
+      "keywords": [
+        "スタートアップ",
+        "資金調達",
+        "起業",
+        "ベンチャー",
+        "ユニコーン",
+        "シリーズA",
+        "シリーズB",
+        "シード",
+        "IPO",
+        "新規上場",
+        "VC"
+      ]
     },
     {
-      "id": "domestic",
-      "label": "国内",
+      "id": "politics",
+      "label": "政治・社会",
       "feeds": [
+        {
+          "source": "NHK",
+          "url": "https://www.nhk.or.jp/rss/news/cat4.xml"
+        },
         {
           "source": "NHK",
           "url": "https://www.nhk.or.jp/rss/news/cat1.xml"
@@ -104,40 +231,123 @@
       ]
     },
     {
-      "id": "politics",
-      "label": "政治",
+      "id": "student",
+      "label": "学生・就活",
       "feeds": [
         {
-          "source": "NHK",
-          "url": "https://www.nhk.or.jp/rss/news/cat4.xml"
+          "source": "マイナビ学生の窓口",
+          "url": "https://gakumado.mynavi.jp/feed"
         }
+      ],
+      "keywords": [
+        "就活",
+        "就職活動",
+        "新卒",
+        "内定",
+        "インターン",
+        "学生",
+        "大学生",
+        "奨学金",
+        "初任給",
+        "卒業"
       ]
     },
     {
-      "id": "world",
-      "label": "国際",
+      "id": "career",
+      "label": "キャリア・教育",
       "feeds": [
         {
-          "source": "NHK",
-          "url": "https://www.nhk.or.jp/rss/news/cat6.xml"
+          "source": "リセマム",
+          "url": "https://resemom.jp/rss20/index.rdf"
+        }
+      ],
+      "keywords": [
+        "転職",
+        "キャリア",
+        "働き方",
+        "副業",
+        "リスキリング",
+        "教育",
+        "学校",
+        "教員",
+        "教師",
+        "受験",
+        "入試",
+        "育休",
+        "年収",
+        "管理職",
+        "リモートワーク",
+        "人材"
+      ]
+    },
+    {
+      "id": "topics",
+      "label": "トピックス",
+      "type": "topics",
+      "feeds": []
+    },
+    {
+      "id": "books",
+      "label": "本",
+      "feeds": [
+        {
+          "source": "ダ・ヴィンチWeb",
+          "url": "https://ddnavi.com/feed/"
         },
         {
-          "source": "Yahoo!ニュース",
-          "url": "https://news.yahoo.co.jp/rss/topics/world.xml"
+          "source": "好書好日",
+          "url": "https://book.asahi.com/rss/index.rdf"
         },
         {
-          "source": "BBCニュース",
-          "url": "https://feeds.bbci.co.uk/japanese/rss.xml"
+          "source": "ほんのひきだし",
+          "url": "https://hon-hikidashi.jp/feed/"
+        }
+      ],
+      "keywords": [
+        "書籍",
+        "出版",
+        "新刊",
+        "小説",
+        "書店",
+        "本屋",
+        "文学賞",
+        "芥川賞",
+        "直木賞",
+        "ベストセラー",
+        "読書",
+        "図書館"
+      ]
+    },
+    {
+      "id": "video",
+      "label": "動画",
+      "feeds": [
+        {
+          "source": "ANNnewsCH",
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCGCZAYq5Xxojl_tSXcVJhiQ"
         },
         {
-          "source": "CNN.co.jp",
-          "url": "https://feeds.cnn.co.jp/rss/cnn/cnn.rdf"
+          "source": "TBS NEWS DIG",
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC6AG81pAkf6Lbi_1VC5NmPA"
+        },
+        {
+          "source": "日テレNEWS",
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCuTAXTexrhetbOe3zgskJBQ"
+        },
+        {
+          "source": "テレ東BIZ",
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCkKVQ_GNjd8FbAuT6xDcWgg"
+        },
+        {
+          "source": "FNNプライムオンライン",
+          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCoQBJMzcwmXrRSHBFAlTsIw"
         }
       ]
     },
     {
       "id": "science",
       "label": "科学",
+      "visible": false,
       "feeds": [
         {
           "source": "NHK",
@@ -152,6 +362,7 @@
     {
       "id": "sports",
       "label": "スポーツ",
+      "visible": false,
       "feeds": [
         {
           "source": "NHK",
@@ -166,6 +377,7 @@
     {
       "id": "entertainment",
       "label": "エンタメ",
+      "visible": false,
       "feeds": [
         {
           "source": "NHK",
