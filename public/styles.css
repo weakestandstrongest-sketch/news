@@ -14,6 +14,11 @@
   --pick: #a5532c;
   --overlay: rgba(20, 18, 15, .35);
   --raised: #ffffff;
+  --glass: rgba(250, 248, 243, .72);
+  --glass-edge: rgba(255, 255, 255, .7);
+  --glass-shine: rgba(255, 255, 255, .8);
+  --glass-active: rgba(29, 28, 26, .07);
+  --tabbar-space: calc(max(10px, var(--safe-bottom) - 10px) + 84px);
 
   --serif: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
   --sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic", sans-serif;
@@ -43,6 +48,10 @@
     --pick: #d99671;
     --overlay: rgba(0, 0, 0, .5);
     --raised: #3a3732;
+    --glass: rgba(38, 37, 34, .62);
+    --glass-edge: rgba(255, 255, 255, .1);
+    --glass-shine: rgba(255, 255, 255, .08);
+    --glass-active: rgba(255, 255, 255, .1);
     color-scheme: dark;
   }
 }
@@ -62,6 +71,10 @@
   --pick: #d99671;
   --overlay: rgba(0, 0, 0, .5);
   --raised: #3a3732;
+  --glass: rgba(38, 37, 34, .62);
+  --glass-edge: rgba(255, 255, 255, .1);
+  --glass-shine: rgba(255, 255, 255, .08);
+  --glass-active: rgba(255, 255, 255, .1);
   color-scheme: dark;
 }
 
@@ -135,7 +148,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .view[hidden] { display: none; }
-.view > .scroll { flex: 1; min-height: 0; }
+.view > .scroll { flex: 1; min-height: 0; padding-bottom: var(--tabbar-space); }
 
 /* ===== マストヘッド ===== */
 .masthead {
@@ -234,7 +247,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .page-inner {
-  padding-bottom: 32px;
+  padding-bottom: var(--tabbar-space);
 }
 
 /* 引っ張って更新 */
@@ -613,14 +626,24 @@ mark {
 .danger { color: #b3402f; }
 .setting.is-button { width: 100%; text-align: left; }
 
-/* ===== 下部タブバー ===== */
+/* ===== 下部タブバー（iOS のような、浮いた半透明のバー） ===== */
 .tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: max(10px, calc(var(--safe-bottom) - 10px));
+  z-index: 5;
   display: flex;
-  flex: none;
-  padding-bottom: var(--safe-bottom);
-  background: var(--bg);
-  border-top: 1px solid var(--line);
-  z-index: 2;
+  gap: 2px;
+  width: calc(100% - 28px);
+  max-width: 440px;
+  padding: 5px;
+  border-radius: 34px;
+  transform: translateX(-50%);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .14), 0 1px 2px rgba(0, 0, 0, .06), inset 0 1px 0 var(--glass-shine);
 }
 
 .tabbar-item {
@@ -628,15 +651,26 @@ mark {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   padding: 7px 0 6px;
-  font-size: 10px;
+  border-radius: 28px;
+  font-size: 10.5px;
+  font-weight: 600;
   letter-spacing: .04em;
-  color: var(--ink-3);
+  color: var(--ink-2);
+  transition: background-color .25s var(--ease), color .2s;
 }
 
-.tabbar-item.is-active { color: var(--accent); }
+.tabbar-item .icon { width: 25px; height: 25px; }
+
+.tabbar-item.is-active {
+  color: var(--accent);
+  background: var(--glass-active);
+}
+
 .tabbar-item.is-active .icon { stroke-width: 1.9; }
+
+.tabbar-item:active { transform: scale(.96); }
 
 /* ===== 記事詳細 ===== */
 .reader {
@@ -812,7 +846,7 @@ mark {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--safe-bottom) + 72px);
+  bottom: calc(var(--tabbar-space) + 4px);
   z-index: 20;
   padding: 9px 16px;
   border-radius: 20px;
