@@ -106,6 +106,18 @@
     <div class="reader-body scroll" id="reader-body"></div>
   </article>
 
+  <div class="sheet" id="open-sheet" hidden>
+    <div class="sheet-backdrop" data-sheet="cancel"></div>
+    <div class="sheet-panel" role="dialog" aria-label="記事を開く">
+      <div class="sheet-group">
+        <p class="sheet-title">記事を開く</p>
+        <button class="sheet-btn" data-sheet="nagi">凪で開く</button>
+        <button class="sheet-btn" data-sheet="comet">Cometで開く</button>
+      </div>
+      <button class="sheet-btn sheet-cancel" data-sheet="cancel">キャンセル</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js" type="module"></script>

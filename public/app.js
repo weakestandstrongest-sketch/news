@@ -23,7 +23,11 @@ const store = {
 
 // tabs: 表示するタブの id（並び順）。null のときは feeds.json の既定の並び
 // tabsHidden: 利用者が非表示にしたタブの id（新しく追加されたタブと区別するため）
-const DEFAULT_SETTINGS = { theme: 'auto', fontSize: 'medium', images: true, dimRead: true, tabs: null, tabsHidden: [] };
+// openWith: 記事を開く方法（ask: 毎回選ぶ / nagi: 凪の中で開く / comet: Comet で開く）
+const DEFAULT_SETTINGS = {
+  theme: 'auto', fontSize: 'medium', images: true, dimRead: true, tabs: null, tabsHidden: [],
+  openWith: 'ask', cometShortcut: 'Cometで開く',
+};
 const FIXED_TAB = 'top'; // トップは非表示にできない
 
 const state = {
@@ -655,8 +659,8 @@ function renderReader(id) {
       ${a.summary
         ? `<p class="reader-summary">${esc(a.summary)}</p>`
         : '<p class="reader-summary is-empty">この記事の概要はありません。元の記事でお読みください。</p>'}
-      <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">${a.book ? '本の詳しい情報を見る' : `${esc(a.source)}で続きを読む`} ${ICON_EXTERNAL}</a>
-      <p class="reader-note">配信元のサイトが開きます</p>
+      <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer" data-open-external>${a.book ? '本の詳しい情報を見る' : `${esc(a.source)}で続きを読む`} ${ICON_EXTERNAL}</a>
+      <p class="reader-note">${{ ask: '凪の中か Comet かを選んで開きます', nagi: '凪の中で配信元のサイトが開きます', comet: 'Comet で配信元のサイトが開きます' }[state.settings.openWith] || ''}</p>
       ${coverageHtml(a)}
       <div class="memo">
         <label for="memo">メモ</label>
@@ -731,6 +735,56 @@ $('#reader-share').addEventListener('click', async () => {
 });
 
 let memoTimer;
+/* ---------- 記事を開く（凪の中 / Comet） ---------- */
+// Comet は URL スキームを公開していないため、iOS の「ショートカット」経由で開く。
+// 利用者が作ったショートカット（既定名「Cometで開く」）に記事の URL を渡して実行する
+function cometUrl(url) {
+  const name = state.settings.cometShortcut || DEFAULT_SETTINGS.cometShortcut;
+  return `shortcuts://run-shortcut?name=${encodeURIComponent(name)}&input=text&text=${encodeURIComponent(url)}`;
+}
+
+function openInNagi(url) {
+  // ホーム画面のアプリでは、凪の上に重なるブラウザ画面で開く（閉じると凪に戻る）
+  window.open(url, '_blank', 'noopener');
+}
+
+function openInComet(url) {
+  location.href = cometUrl(url);
+}
+
+const sheet = $('#open-sheet');
+let sheetUrl = null;
+
+function showOpenSheet(url) {
+  sheetUrl = url;
+  sheet.hidden = false;
+  requestAnimationFrame(() => sheet.classList.add('is-open'));
+}
+
+function hideOpenSheet() {
+  sheet.classList.remove('is-open');
+  setTimeout(() => (sheet.hidden = true), 250);
+}
+
+sheet.addEventListener('click', (e) => {
+  const action = e.target.closest('[data-sheet]')?.dataset.sheet;
+  if (!action) return;
+  const url = sheetUrl;
+  hideOpenSheet();
+  if (action === 'nagi') openInNagi(url);
+  if (action === 'comet') openInComet(url);
+});
+
+el.readerBody.addEventListener('click', (e) => {
+  const link = e.target.closest('[data-open-external]');
+  if (!link || !/^https?:/.test(link.href)) return;
+  const mode = state.settings.openWith;
+  if (mode === 'nagi') return; // 通常のリンクとして開く
+  e.preventDefault();
+  if (mode === 'comet') openInComet(link.href);
+  else showOpenSheet(link.href);
+});
+
 el.readerBody.addEventListener('input', (e) => {
   if (e.target.id !== 'memo') return;
   const id = state.readerId;
@@ -993,6 +1047,23 @@ function renderSettings() {
       </div>
     </div>
     <div class="settings-group">
+      <h3>記事を開く</h3>
+      <div class="settings-list">
+        <div class="setting"><span>開き方</span>${segmented('openWith', [['ask', '毎回選ぶ'], ['nagi', '凪'], ['comet', 'Comet']])}</div>
+        <label class="setting"><span>ショートカット名</span><input class="setting-input" data-input="cometShortcut" value="${esc(s.cometShortcut)}" enterkeyhint="done" autocomplete="off"></label>
+      </div>
+      <details class="setting-help">
+        <summary>Comet で開くための準備（最初に 1 回だけ）</summary>
+        <ol>
+          <li>iPhone の「ショートカット」アプリを開き、右上の「＋」で新しいショートカットを作る</li>
+          <li>「アクションを追加」で <b>Comet</b> を検索し、<b>Open URL（URL を開く）</b> を追加する</li>
+          <li>URL の欄をタップして「<b>ショートカットの入力</b>」を選ぶ</li>
+          <li>ショートカットの名前を「<b>${esc(s.cometShortcut)}</b>」にして保存する</li>
+        </ol>
+        <p>以後「Cometで開く」を選ぶと、ショートカットが一瞬開いてから Comet で記事が表示されます。名前を変えたときは上の「ショートカット名」も同じにしてください。</p>
+      </details>
+    </div>
+    <div class="settings-group">
       <h3>データ</h3>
       <div class="settings-list">
         <button class="setting is-button" data-action="clear-read">既読の履歴を消去</button>
@@ -1009,6 +1080,15 @@ function renderSettings() {
     </div>
     <div style="height:32px"></div>`;
 }
+
+el.settings.addEventListener('change', (e) => {
+  const input = e.target.closest('[data-input]');
+  if (!input) return;
+  state.settings[input.dataset.input] = input.value.trim() || DEFAULT_SETTINGS[input.dataset.input];
+  saveSettings();
+  renderSettings();
+  toast('保存しました');
+});
 
 el.settings.addEventListener('click', (e) => {
   const seg = e.target.closest('[data-setting]');
