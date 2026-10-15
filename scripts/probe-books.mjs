@@ -25,15 +25,29 @@ for (const [name, url] of Object.entries(feeds)) {
   }));
   console.log(`PROBE ${name}: ${items.length} 記事中 ${hits} 記事で ISBN を発見`);
 }
-const isbns = [...found.keys()].slice(0, 100);
+const isbns = [...found.keys()].slice(0, 150);
 console.log(`PROBE ISBN 候補 ${found.size} 件`);
-if (isbns.length) {
-  const res = JSON.parse(await get(`https://api.openbd.jp/v1/get?isbn=${isbns.join(',')}`));
-  let ok = 0, cover = 0;
-  res.forEach((b, i) => {
-    if (!b) return; ok++; if (b.summary.cover) cover++;
-    const desc = b.onix?.CollateralDetail?.TextContent?.[0]?.Text || '';
-    if (ok <= 12) console.log(`PROBE BOOK ${b.summary.title} / ${b.summary.author} / ${b.summary.pubdate} / cover:${!!b.summary.cover} / desc:${desc.length} ← ${found.get(isbns[i]).from}「${found.get(isbns[i]).title.slice(0, 30)}」`);
-  });
-  console.log(`PROBE openBD: ${ok}/${isbns.length} 件ヒット、表紙あり ${cover} 件`);
+const res = JSON.parse(await get(`https://api.openbd.jp/v1/get?isbn=${isbns.join(',')}`));
+const books = [];
+res.forEach((b, i) => {
+  if (!b) return;
+  const subj = (b.onix?.DescriptiveDetail?.Subject || []).map((x) => x.SubjectCode).join(',');
+  const desc = (b.onix?.CollateralDetail?.TextContent || []).map((t) => t.Text).join(' ');
+  books.push({ isbn: isbns[i], title: b.summary.title, author: b.summary.author, publisher: b.summary.publisher, pubdate: b.summary.pubdate, cover: b.summary.cover, subj, desc: desc.length, from: found.get(isbns[i]).from });
+});
+const nonComic = books.filter((b) => !/^C?\d?\d?79/.test(b.subj) && !/コミック/.test(b.subj));
+console.log(`PROBE openBD ${books.length} 件（コミック以外 ${nonComic.length} 件）`);
+for (const b of nonComic.slice(0, 25)) console.log(`PROBE BOOK ${b.isbn} ${b.title} / ${b.author} / ${b.publisher} / ${b.pubdate} / subj:${b.subj} / cover:${!!b.cover} / desc:${b.desc} ← ${b.from}`);
+// 表紙の取得先の確認
+for (const b of nonComic.slice(0, 5)) {
+  for (const u of [`https://www.hanmoto.com/bd/isbn/${b.isbn}`, `https://cover.openbd.jp/${b.isbn}.jpg`, `https://images-na.ssl-images-amazon.com/images/P/${b.isbn.slice(3, 12)}${(() => { let s = 0; for (let i = 0; i < 9; i++) s += (10 - i) * +b.isbn[3 + i]; const c = (11 - (s % 11)) % 11; return c === 10 ? 'X' : c; })()}.09.LZZZZZZZ.jpg`]) {
+    try {
+      const r = await fetch(u, { headers: UA, signal: AbortSignal.timeout(12000) });
+      const ct = r.headers.get('content-type') || '';
+      let extra = '';
+      if (ct.includes('html')) { const h = await r.text(); extra = (h.match(/<meta[^>]+og:image[^>]+>/i) || [''])[0].slice(0, 200) + ' | ' + (h.match(/<meta[^>]+og:description[^>]+>/i) || [''])[0].slice(0, 200); }
+      else extra = `${(await r.arrayBuffer()).byteLength} bytes`;
+      console.log(`PROBE COVER ${r.status} ${ct} ${u} ${extra}`);
+    } catch (e) { console.log(`PROBE COVER ERR ${u} ${e.message}`); }
+  }
 }
