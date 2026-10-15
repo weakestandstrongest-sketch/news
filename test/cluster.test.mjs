@@ -19,6 +19,9 @@ const saize2 = art('Impress Watch', 'サイゼリヤ値上げ　ミラノ風ド�
 const saize3 = art('朝日新聞', 'サイゼリヤ、平均6%値上げへ　ミラノ風ドリアは320円に：朝日新聞');
 const unrelated = art('ITmedia', 'Apple、スマートホームハブを正式発表');
 const old = art('NHK', 'ロシアが北海道新聞記者をスパイ容疑で拘束', '', 100);
+// はてなブックマーク経由の英語の記事（実際に誤ってまとまった例）
+const en1 = art('GitHub', 'claude-plugins-official/plugins/code-modernization/README.md at main · anthropics/claude-plugins-official');
+const en2 = art('slack.engineering', 'How we migrated our internal platform at Slack', 'In this post we share the story of the migration');
 
 // 実際の取得結果（約 350 件）に近い条件にするため、無関係な見出しで水増しする
 // （2-gram の珍しさ＝IDF は記事の総数に左右されるため）
@@ -27,7 +30,7 @@ const rand = () => ((seed = (seed * 48271) % 2147483647) / 2147483647);
 const filler = Array.from({ length: 300 }, (_, i) =>
   art(`メディア${i % 20}`, Array.from({ length: 20 }, () => String.fromCharCode(0x4e00 + Math.floor(rand() * 3000))).join('')));
 
-const all = [spyNhk, spyBbc, spyToyo, csSe, csPa, csYahoo, saize2, saize3, unrelated, old, ...filler];
+const all = [spyNhk, spyBbc, spyToyo, csSe, csPa, csYahoo, saize2, saize3, unrelated, old, en1, en2, ...filler];
 const topics = clusterArticles(all);
 const topicOf = (a) => topics.find((t) => t.articleIds.includes(a.id));
 
@@ -46,6 +49,11 @@ test('同じメディアの「似た型の別の記事」はまとめない', ()
 test('関係ない記事や時間が離れた記事はまとめない', () => {
   assert.equal(topicOf(unrelated), undefined);
   assert.notEqual(topicOf(old), topicOf(spyNhk));
+});
+
+test('英語の見出しは単語で比べる（"th" "in" のような文字の組で似たことにしない）', () => {
+  assert.equal(topicOf(en1), undefined);
+  assert.equal(topicOf(en2), undefined);
 });
 
 test('normalizeTitle: 【速報】やサイト名の後付けを除く', () => {

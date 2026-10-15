@@ -1,10 +1,10 @@
-// 似た記事を「話題」にまとめる（文字 2-gram の TF-IDF ＋ コサイン類似度）
+// 似た記事を「話題」にまとめる（文字 2-gram・英単語の TF-IDF ＋ コサイン類似度）
 // 日本語は単語の区切りがないため、形態素解析の代わりに 2 文字ずつの組み合わせで比べる
 
 const DEFAULTS = {
   // 同じメディアの記事同士は、別の出来事でも見出しの型が似やすい（「CSファイナルステージ 第1戦は…」など）。
   // そのため、主に「他のメディアの記事とどれだけ似ているか」で同じ話題かを判断する
-  threshold: 0.26, // 他メディアの記事との平均類似度がこれ以上なら同じ話題（実データで調整）
+  threshold: 0.28, // 他メディアの記事との平均類似度がこれ以上なら同じ話題（実データで調整）
   sameSourceThreshold: 0.75, // 同じメディアの記事しかない話題には、ほぼ同じ見出しのときだけ加える
   windowHours: 36, // これより時間が離れた記事はまとめない
   summaryChars: 80, // 概要は冒頭だけ使う（後半は話題が広がりやすい）
@@ -22,25 +22,31 @@ export function normalizeTitle(title) {
   return t;
 }
 
-function compact(text) {
-  return text
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[\s\p{P}\p{S}]/gu, '');
-}
+// 英語でよく出てくる、話題の区別に役立たない語
+const STOPWORDS = new Set(
+  'a an the of to in on at for and or is are was be by with from as it its this that how why what we our you your md com www http https'.split(' '),
+);
 
-function bigrams(text) {
-  const s = compact(text);
-  const grams = [];
-  for (let i = 0; i < s.length - 1; i++) grams.push(s.slice(i, i + 2));
-  return grams;
+// 日本語は 2 文字ずつ、英数字は単語ごとに区切る
+// （英語まで 2 文字ずつにすると "th" "in" のような組がどの見出しにも現れ、無関係な英語の記事同士が似てしまう）
+function terms(text) {
+  const s = text.normalize('NFKC').toLowerCase();
+  const out = [];
+  for (const w of s.match(/[a-z0-9]+/g) || []) {
+    if (!STOPWORDS.has(w) && (w.length > 1 || /\d/.test(w))) out.push(`w:${w}`);
+  }
+  for (const segment of s.split(/[a-z0-9]+/)) {
+    const c = segment.replace(/[\s\p{P}\p{S}]/gu, '');
+    for (let i = 0; i < c.length - 1; i++) out.push(c.slice(i, i + 2));
+  }
+  return out;
 }
 
 function termCounts(article, opts) {
   const tf = new Map();
   const add = (g, w) => tf.set(g, (tf.get(g) || 0) + w);
-  for (const g of bigrams(normalizeTitle(article.title))) add(g, 1);
-  for (const g of bigrams((article.summary || '').slice(0, opts.summaryChars))) add(g, opts.summaryWeight);
+  for (const g of terms(normalizeTitle(article.title))) add(g, 1);
+  for (const g of terms((article.summary || '').slice(0, opts.summaryChars))) add(g, opts.summaryWeight);
   return tf;
 }
 

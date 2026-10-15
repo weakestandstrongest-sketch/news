@@ -1,4 +1,7 @@
 {
+  "excludeDomains": [
+    "kyoko-np.net"
+  ],
   "categories": [
     {
       "id": "top",

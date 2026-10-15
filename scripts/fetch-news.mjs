@@ -161,6 +161,15 @@ async function enrichWithOgp(articles) {
 async function main() {
   const config = JSON.parse(await readFile(FEEDS, 'utf8'));
   const failed = [];
+  // 風刺サイトなど、ニュースとして扱わないサイト（feeds.json の excludeDomains）
+  const excluded = (url) => {
+    try {
+      const host = new URL(url).hostname;
+      return (config.excludeDomains || []).some((d) => host === d || host.endsWith(`.${d}`));
+    } catch {
+      return false;
+    }
+  };
   const categories = [];
 
   for (const cat of config.categories) {
@@ -170,7 +179,7 @@ async function main() {
       const feed = cat.feeds[i];
       if (r.status === 'fulfilled') {
         console.log(`✓ [${cat.label}] ${feed.source}: ${r.value.length} 件`);
-        items.push(...r.value);
+        items.push(...r.value.filter((item) => !excluded(item.url)));
       } else {
         console.warn(`✗ [${cat.label}] ${feed.source} (${feed.url}): ${r.reason?.message}`);
         failed.push(feed.url);
