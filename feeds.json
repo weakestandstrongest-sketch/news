@@ -2,6 +2,12 @@
   "excludeDomains": [
     "kyoko-np.net"
   ],
+  "bookSources": [
+    "東洋経済オンライン",
+    "ダイヤモンド・オンライン",
+    "プレジデント",
+    "現代ビジネス"
+  ],
   "categories": [
     {
       "id": "top",

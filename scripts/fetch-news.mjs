@@ -6,6 +6,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFeed, decodeEntities, stripHtml, cleanTitle } from './lib/feed-parser.mjs';
 import { clusterArticles } from './lib/cluster.mjs';
+import { buildBooks } from './lib/books.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(process.env.NEWS_OUT || resolve(ROOT, 'public/data/news.json'));
@@ -296,7 +297,18 @@ async function main() {
     console.log(`  ${t.sources.length}社 ${t.articleIds.length}件  ${unique.get(t.articleIds[0]).title}  [${t.sources.join(' / ')}]`);
   }
 
-  const data = { generatedAt: new Date().toISOString(), categories, topics };
+  // 本タブの「今日の一冊」
+  let books = null;
+  if (config.bookSources?.length) {
+    try {
+      books = await buildBooks(pool, { sources: config.bookSources, fetchText, metaContent, previous });
+    } catch (err) {
+      console.warn(`今日の一冊を作れませんでした: ${err.message}`);
+      books = previous?.books || null;
+    }
+  }
+
+  const data = { generatedAt: new Date().toISOString(), categories, topics, ...(books && { books }) };
   await mkdir(dirname(OUT), { recursive: true });
   await writeFile(OUT, JSON.stringify(data));
   console.log(`\n${total} 件の記事を書き出しました → ${OUT}` + (failed.length ? `（失敗したフィード: ${failed.length}）` : ''));

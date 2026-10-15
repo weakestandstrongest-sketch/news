@@ -19,5 +19,3 @@ jobs:
       - run: npm test
       - name: RSS を取得（公開はしない）
         run: npm run fetch
-      - name: 本のデータ取得先の確認（一時的）
-        run: node scripts/probe-books.mjs
