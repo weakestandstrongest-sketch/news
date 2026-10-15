@@ -147,7 +147,7 @@ const SITE_WORD = /(新聞|通信|ニュース|NEWS|News|オンライン|Online|
 
 export function cleanTitle(title) {
   let t = title.trim();
-  const parts = t.split(/\s+[|｜]\s+/);
+  const parts = t.split(/\s+[|｜]\s+|｜(?=[^｜]{1,20}$)/);
   if (parts.length > 1 && parts[0].length >= 8 && SITE_WORD.test(parts[parts.length - 1])) t = parts[0];
   t = t.replace(/\s+[-–—]\s+([^-–—]{1,20})$/, (m, tail) => (SITE_WORD.test(tail) ? '' : m));
   t = t.replace(/[：:]\s*([^：:]{1,14})$/, (m, tail) => (SITE_WORD.test(tail) && t.length - m.length >= 8 ? '' : m));

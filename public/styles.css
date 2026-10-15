@@ -921,3 +921,129 @@ mark {
 }
 
 .is-read .cov-head { color: var(--ink-read); }
+
+/* ===== タブの並び替えと選択 ===== */
+.view-title { display: flex; align-items: center; }
+.view-back { margin: -10px 2px -10px -12px; }
+
+.chev { color: var(--ink-3); font-size: 13px; }
+.setting.is-button { display: flex; justify-content: space-between; align-items: center; }
+
+.reset-wrap { padding: 12px var(--gutter) 0; }
+
+.btn-outline {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.btn-outline:active { background: var(--sunken); }
+
+.tab-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 6px 0 var(--gutter);
+  background: var(--surface);
+  font-size: 15.5px;
+  transition: transform .18s var(--ease);
+}
+
+.tab-row + .tab-row { border-top: 1px solid var(--line); }
+
+.tab-row.is-dragging {
+  z-index: 2;
+  transition: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .14);
+  border-radius: 6px;
+}
+
+.tab-row-label { flex: 1; min-width: 0; }
+
+.tab-btn,
+.tab-btn-space {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.tab-btn {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.tab-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.tab-btn.is-remove { background: #c8553f; }
+.tab-btn.is-add { background: #4c8a5c; }
+
+.drag-handle {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 52px;
+  color: var(--ink-3);
+  touch-action: none;
+  cursor: grab;
+}
+
+/* ===== トピックス ===== */
+.page-lead {
+  margin: 0;
+  padding: 14px var(--gutter) 2px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.topic-card {
+  margin: 12px var(--gutter) 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.topic-lead {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 12px;
+  padding: 14px;
+}
+
+.topic-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.topic-other {
+  display: block;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.topic-other .cov-source { display: inline; margin-right: 8px; }
+
+.topic-other .cov-head {
+  display: inline;
+  font-size: calc(14px * var(--scale));
+  line-height: 1.6;
+}
+
+.is-read .row-title, .topic-other.is-read .cov-head { color: var(--ink-read); }

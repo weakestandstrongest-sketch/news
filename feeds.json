@@ -192,12 +192,7 @@
     {
       "id": "startup",
       "label": "スタートアップ",
-      "feeds": [
-        {
-          "source": "BRIDGE",
-          "url": "https://thebridge.jp/feed"
-        }
-      ],
+      "feeds": [],
       "keywords": [
         "スタートアップ",
         "資金調達",
@@ -209,7 +204,11 @@
         "シード",
         "IPO",
         "新規上場",
-        "VC"
+        "VC",
+        "創業",
+        "新興企業",
+        "M&A",
+        "買収"
       ]
     },
     {
@@ -233,12 +232,7 @@
     {
       "id": "student",
       "label": "学生・就活",
-      "feeds": [
-        {
-          "source": "マイナビ学生の窓口",
-          "url": "https://gakumado.mynavi.jp/feed"
-        }
-      ],
+      "feeds": [],
       "keywords": [
         "就活",
         "就職活動",
@@ -291,14 +285,6 @@
       "label": "本",
       "feeds": [
         {
-          "source": "ダ・ヴィンチWeb",
-          "url": "https://ddnavi.com/feed/"
-        },
-        {
-          "source": "好書好日",
-          "url": "https://book.asahi.com/rss/index.rdf"
-        },
-        {
           "source": "ほんのひきだし",
           "url": "https://hon-hikidashi.jp/feed/"
         }
@@ -323,20 +309,12 @@
       "label": "動画",
       "feeds": [
         {
-          "source": "ANNnewsCH",
-          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCGCZAYq5Xxojl_tSXcVJhiQ"
-        },
-        {
           "source": "TBS NEWS DIG",
           "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC6AG81pAkf6Lbi_1VC5NmPA"
         },
         {
           "source": "日テレNEWS",
           "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCuTAXTexrhetbOe3zgskJBQ"
-        },
-        {
-          "source": "テレ東BIZ",
-          "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCkKVQ_GNjd8FbAuT6xDcWgg"
         },
         {
           "source": "FNNプライムオンライン",

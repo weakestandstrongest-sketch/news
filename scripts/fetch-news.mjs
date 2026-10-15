@@ -251,7 +251,9 @@ async function main() {
   }
 
   // 複数のメディアが報じている同じ話題をまとめる
-  const topics = clusterArticles([...unique.values()]);
+  // 「ニュースライブ」のような番組全体の動画は、特定の出来事ではないのでまとめない
+  const GENERIC = /ニュースライブ|ライブ配信|LIVE|ダイジェスト|【まとめ】/i;
+  const topics = clusterArticles([...unique.values()].filter((a) => !GENERIC.test(a.title)));
   for (const t of topics) for (const id of t.articleIds) unique.get(id).topic = t.id;
   topics.sort((a, b) => b.sources.length - a.sources.length || Date.parse(b.latest || 0) - Date.parse(a.latest || 0));
   console.log(`\n話題: ${topics.length} 件（2 件以上の記事をまとめたもの）`);

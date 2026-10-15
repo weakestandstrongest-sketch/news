@@ -21,7 +21,10 @@ const store = {
   },
 };
 
-const DEFAULT_SETTINGS = { theme: 'auto', fontSize: 'medium', images: true, dimRead: true, hidden: [] };
+// tabs: 表示するタブの id（並び順）。null のときは feeds.json の既定の並び
+// tabsHidden: 利用者が非表示にしたタブの id（新しく追加されたタブと区別するため）
+const DEFAULT_SETTINGS = { theme: 'auto', fontSize: 'medium', images: true, dimRead: true, tabs: null, tabsHidden: [] };
+const FIXED_TAB = 'top'; // トップは非表示にできない
 
 const state = {
   data: null,
@@ -34,6 +37,7 @@ const state = {
   view: 'news',
   lastFetch: 0,
   readerId: null,
+  settingsPage: 'main',
 };
 
 /* ---------- DOM ---------- */
@@ -101,10 +105,39 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.toast.classList.remove('is-show'), 2000);
 }
 
+// 表示するタブと、非表示のタブ
+function tabLayout() {
+  const cats = state.data?.categories || [];
+  const byId = new Map(cats.map((c) => [c.id, c]));
+  const { tabs, tabsHidden } = state.settings;
+  let visible;
+  if (!tabs) {
+    visible = cats.filter((c) => c.visible !== false);
+  } else {
+    visible = tabs.map((id) => byId.get(id)).filter(Boolean);
+    // 後から増えたタブは、既定で表示するものなら末尾に足す
+    for (const c of cats) {
+      if (!tabs.includes(c.id) && !tabsHidden.includes(c.id) && c.visible !== false) visible.push(c);
+    }
+  }
+  if (byId.has(FIXED_TAB) && !visible.some((c) => c.id === FIXED_TAB)) visible.unshift(byId.get(FIXED_TAB));
+  if (!visible.length && cats.length) visible = [cats[0]];
+  return { visible, hidden: cats.filter((c) => !visible.includes(c)) };
+}
+
 function visibleCategories() {
-  if (!state.data) return [];
-  const cats = state.data.categories.filter((c) => !state.settings.hidden.includes(c.id));
-  return cats.length ? cats : state.data.categories.slice(0, 1);
+  return tabLayout().visible;
+}
+
+function applyTabs(ids) {
+  const currentId = visibleCategories()[state.current]?.id;
+  const all = (state.data?.categories || []).map((c) => c.id);
+  state.settings.tabs = ids;
+  state.settings.tabsHidden = all.filter((id) => !ids.includes(id));
+  saveSettings();
+  const i = ids.indexOf(currentId);
+  state.current = i >= 0 ? i : 0;
+  renderNews();
 }
 
 function lookup(id) {
@@ -255,7 +288,7 @@ function categoryHtml(cat, isTop) {
     // 日経のトップ面のように、各カテゴリの主な見出しを並べる
     const shown = new Set(list.map((a) => a.id));
     for (const other of visibleCategories()) {
-      if (other.id === cat.id) continue;
+      if (other.id === cat.id || other.type === 'topics') continue;
       const picks = collapseTopics(other.articles.filter((a) => !shown.has(a.id)), shownTopics).slice(0, 3);
       if (!picks.length) continue;
       picks.forEach((a) => shown.add(a.id));
@@ -270,6 +303,37 @@ function categoryHtml(cat, isTop) {
   return html;
 }
 
+// 「トピックス」タブ：複数のメディアが報じている話題を、報道の多い順に並べる
+function topicsPageHtml() {
+  const topics = rankedTopics();
+  if (!topics.length) {
+    return emptyHtml(ICON_CLOUD, '複数のメディアが報じている話題は<br>まだありません');
+  }
+  const cards = topics.map((t) => {
+    const lead = leadOf(t);
+    const others = t.articles
+      .filter((a) => a.id !== lead.id)
+      .sort((x, y) => (Date.parse(y.publishedAt) || 0) - (Date.parse(x.publishedAt) || 0))
+      .slice(0, 3);
+    return `<article class="topic-card">
+      <a class="topic-lead tap${readClass(lead)}" href="${esc(safeUrl(lead.url))}" data-article="${lead.id}">
+        ${imgHtml(lead.image, 'row-thumb')}
+        <div class="row-text">
+          <div class="topic-count">${t.sources.length}社が報道</div>
+          <h3 class="row-title">${esc(lead.title)}</h3>
+          ${metaHtml(lead)}
+        </div>
+      </a>
+      ${others.map((o) => `<a class="topic-other tap${readClass(o)}" href="${esc(safeUrl(o.url))}" data-article="${o.id}">
+        <span class="cov-source">${esc(o.source)}</span>
+        <span class="cov-head">${esc(o.title)}</span>
+      </a>`).join('')}
+    </article>`;
+  });
+  return `<p class="page-lead">複数のメディアが報じている話題を、報道の多い順に並べています。</p>${cards.join('')}
+    <p class="page-foot">話題 ${topics.length} 件</p>`;
+}
+
 function renderNews() {
   const cats = visibleCategories();
   if (state.current >= cats.length) state.current = 0;
@@ -281,7 +345,7 @@ function renderNews() {
   el.pager.innerHTML = cats
     .map((c, i) => `<div class="page scroll" data-cat="${c.id}" role="tabpanel">
       <div class="ptr"><span></span></div>
-      <div class="page-inner">${categoryHtml(c, i === 0)}</div>
+      <div class="page-inner">${c.type === 'topics' ? topicsPageHtml() : categoryHtml(c, c.id === FIXED_TAB)}</div>
     </div>`)
     .join('');
 
@@ -695,6 +759,10 @@ document.addEventListener('error', (e) => {
 /* ---------- 画面切り替え ---------- */
 function showView(name) {
   if (name === state.view) {
+    if (name === 'settings' && state.settingsPage !== 'main') {
+      state.settingsPage = 'main';
+      renderSettings();
+    }
     if (name === 'news') el.pager.children[state.current]?.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
@@ -711,7 +779,10 @@ function showView(name) {
     requestAnimationFrame(() => (el.pager.scrollLeft = state.current * el.pager.clientWidth));
   }
   if (name === 'saved') renderSaved();
-  if (name === 'settings') renderSettings();
+  if (name === 'settings') {
+    state.settingsPage = 'main';
+    renderSettings();
+  }
   if (name === 'search') {
     renderSearch();
     if (!el.searchInput.value) el.searchInput.focus();
@@ -807,7 +878,51 @@ function switchHtml(attrs, on, label) {
   return `<button class="switch" role="switch" ${attrs} aria-checked="${on}" aria-label="${esc(label)}"></button>`;
 }
 
+const ICON_BACK = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5-7 7 7 7"/></svg>';
+const ICON_MINUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10"/></svg>';
+const ICON_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 12h10M12 7v10"/></svg>';
+const ICON_GRIP = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14M5 12h14M5 15h14"/></svg>';
+
+function setSettingsTitle(text, back) {
+  document.querySelector('.view-settings .view-head').innerHTML = `<h2 class="view-title">${
+    back ? `<button class="icon-btn view-back" data-action="settings-back" aria-label="戻る">${ICON_BACK}</button>` : ''
+  }${esc(text)}</h2>`;
+}
+
+// NewsPicks の「タブの並び替えと選択」と同じ操作：−で非表示、＋で表示、≡ をドラッグして並び替え
+function renderTabSettings() {
+  setSettingsTitle('タブの並び替えと選択', true);
+  const { visible, hidden } = tabLayout();
+  el.settings.innerHTML = `
+    <p class="setting-note">−で非表示、＋で表示、右の ≡ を上下にドラッグすると並び替えができます。</p>
+    <div class="reset-wrap"><button class="btn-outline" data-action="reset-tabs">並び替えと選択をデフォルトに戻す</button></div>
+    <div class="settings-group">
+      <h3>表示されているタブ</h3>
+      <div class="settings-list" id="tab-visible">
+        ${visible.map((c) => `<div class="tab-row" data-id="${c.id}">
+          ${c.id === FIXED_TAB
+            ? '<span class="tab-btn-space"></span>'
+            : `<button class="tab-btn is-remove" data-remove="${c.id}" aria-label="${esc(c.label)}を非表示にする">${ICON_MINUS}</button>`}
+          <span class="tab-row-label">${esc(c.label)}</span>
+          <span class="drag-handle" aria-label="ドラッグして並び替え">${ICON_GRIP}</span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="settings-group">
+      <h3>タブを表示</h3>
+      ${hidden.length
+        ? `<div class="settings-list">${hidden.map((c) => `<div class="tab-row">
+            <button class="tab-btn is-add" data-add="${c.id}" aria-label="${esc(c.label)}を表示する">${ICON_PLUS}</button>
+            <span class="tab-row-label">${esc(c.label)}</span>
+          </div>`).join('')}</div>`
+        : '<p class="setting-note">すべてのタブを表示しています。</p>'}
+    </div>
+    <div style="height:32px"></div>`;
+}
+
 function renderSettings() {
+  if (state.settingsPage === 'tabs') return renderTabSettings();
+  setSettingsTitle('設定', false);
   const s = state.settings;
   const cats = state.data?.categories || [];
   const sources = [...new Set(cats.flatMap((c) => c.articles.map((a) => a.source)))];
@@ -823,11 +938,10 @@ function renderSettings() {
       </div>
     </div>
     <div class="settings-group">
-      <h3>カテゴリ</h3>
+      <h3>タブ</h3>
       <div class="settings-list">
-        ${cats.map((c) => `<div class="setting"><span>${esc(c.label)}</span>${switchHtml(`data-category="${c.id}"`, !s.hidden.includes(c.id), c.label)}</div>`).join('')}
+        <button class="setting is-button" data-action="edit-tabs"><span>タブの並び替えと選択</span><span class="chev">${visibleCategories().length}個表示 ›</span></button>
       </div>
-      <p class="setting-note">オフにしたカテゴリはタブに表示されません。</p>
     </div>
     <div class="settings-group">
       <h3>データ</h3>
@@ -850,8 +964,9 @@ function renderSettings() {
 el.settings.addEventListener('click', (e) => {
   const seg = e.target.closest('[data-setting]');
   const toggle = e.target.closest('[data-toggle]');
-  const cat = e.target.closest('[data-category]');
   const action = e.target.closest('[data-action]');
+  const add = e.target.closest('[data-add]');
+  const remove = e.target.closest('[data-remove]');
   const s = state.settings;
 
   if (seg) {
@@ -862,19 +977,24 @@ el.settings.addEventListener('click', (e) => {
     s[toggle.dataset.toggle] = !s[toggle.dataset.toggle];
     saveSettings();
     renderNews();
-  } else if (cat) {
-    const id = cat.dataset.category;
-    const hidden = new Set(s.hidden);
-    if (hidden.has(id)) hidden.delete(id);
-    else hidden.add(id);
-    if (hidden.size >= (state.data?.categories.length || 0)) {
-      toast('少なくとも 1 つのカテゴリを表示してください');
-      return;
-    }
-    s.hidden = [...hidden];
-    state.current = 0;
+  } else if (add) {
+    applyTabs([...visibleCategories().map((c) => c.id), add.dataset.add]);
+  } else if (remove) {
+    applyTabs(visibleCategories().map((c) => c.id).filter((id) => id !== remove.dataset.remove));
+  } else if (action?.dataset.action === 'edit-tabs') {
+    state.settingsPage = 'tabs';
+    el.settings.scrollTop = 0;
+  } else if (action?.dataset.action === 'settings-back') {
+    state.settingsPage = 'main';
+  } else if (action?.dataset.action === 'reset-tabs') {
+    if (!confirm('タブの並び順と表示をデフォルトに戻しますか？')) return;
+    const currentId = visibleCategories()[state.current]?.id;
+    s.tabs = null;
+    s.tabsHidden = [];
     saveSettings();
+    state.current = Math.max(0, visibleCategories().findIndex((c) => c.id === currentId));
     renderNews();
+    toast('デフォルトに戻しました');
   } else if (action?.dataset.action === 'clear-read') {
     if (!confirm('既読の履歴を消去しますか？')) return;
     state.read = new Set();
@@ -894,6 +1014,51 @@ el.settings.addEventListener('click', (e) => {
   renderSettings();
 });
 
+document.querySelector('.view-settings .view-head').addEventListener('click', (e) => {
+  if (!e.target.closest('[data-action="settings-back"]')) return;
+  state.settingsPage = 'main';
+  renderSettings();
+});
+
+// ≡ をドラッグしてタブを並び替える（指を離した位置に移動）
+el.settings.addEventListener('pointerdown', (e) => {
+  const handle = e.target.closest('.drag-handle');
+  if (!handle) return;
+  e.preventDefault();
+  const row = handle.closest('.tab-row');
+  const rows = [...row.parentElement.children];
+  const from = rows.indexOf(row);
+  const h = row.getBoundingClientRect().height;
+  const startY = e.clientY;
+  let to = from;
+  row.classList.add('is-dragging');
+  handle.setPointerCapture(e.pointerId);
+
+  const move = (ev) => {
+    const dy = Math.max(-from * h - h / 2, Math.min((rows.length - 1 - from) * h + h / 2, ev.clientY - startY));
+    to = Math.max(0, Math.min(rows.length - 1, from + Math.round(dy / h)));
+    row.style.transform = `translateY(${dy}px)`;
+    rows.forEach((r, i) => {
+      if (r === row) return;
+      const shift = from < to && i > from && i <= to ? -h : from > to && i < from && i >= to ? h : 0;
+      r.style.transform = shift ? `translateY(${shift}px)` : '';
+    });
+  };
+  const end = () => {
+    handle.removeEventListener('pointermove', move);
+    handle.removeEventListener('pointerup', end);
+    handle.removeEventListener('pointercancel', end);
+    const ids = rows.map((r) => r.dataset.id);
+    const [moved] = ids.splice(from, 1);
+    ids.splice(to, 0, moved);
+    if (to !== from) applyTabs(ids);
+    renderSettings();
+  };
+  handle.addEventListener('pointermove', move);
+  handle.addEventListener('pointerup', end);
+  handle.addEventListener('pointercancel', end);
+});
+
 /* ---------- 起動 ---------- */
 async function init() {
   applySettings();
@@ -901,7 +1066,8 @@ async function init() {
   history.replaceState(history.state?.reader ? {} : history.state, '');
 
   await refresh();
-  const lastCat = store.get('lastCat', null);
+  // 前回見ていたタブ（初回はトップ）から始める
+  const lastCat = store.get('lastCat', FIXED_TAB);
   const i = visibleCategories().findIndex((c) => c.id === lastCat);
   if (i > 0) {
     state.current = i;

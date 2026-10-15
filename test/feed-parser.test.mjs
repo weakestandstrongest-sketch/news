@@ -43,6 +43,7 @@ test('cleanTitle: 見出しの後ろのサイト名を除く', () => {
   assert.equal(cleanTitle('簗農水相が辞表提出「これ以上迷惑かけるわけには」：朝日新聞'), '簗農水相が辞表提出「これ以上迷惑かけるわけには」');
   assert.equal(cleanTitle('阪急電鉄、全車両で中づり広告廃止　27年4月から - 日本経済新聞'), '阪急電鉄、全車両で中づり広告廃止　27年4月から');
   assert.equal(cleanTitle('千葉豪雨 タクシー水没の事故 詳しい経緯が判明 | NHKニュース'), '千葉豪雨 タクシー水没の事故 詳しい経緯が判明');
+  assert.equal(cleanTitle('米中間選挙・トランプ大統領がアラスカ州で遊説【news23】｜TBS NEWS DIG'), '米中間選挙・トランプ大統領がアラスカ州で遊説【news23】');
   // サイト名でないものは残す
   assert.equal(cleanTitle('読む政治:簗農相、疑惑払拭できぬまま辞任'), '読む政治:簗農相、疑惑払拭できぬまま辞任');
   assert.equal(cleanTitle('A - B 戦の結果'), 'A - B 戦の結果');
