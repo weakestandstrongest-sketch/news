@@ -7,6 +7,10 @@
 const SITE_RULES = [
   // 日本経済新聞：記事に鍵のバナーが出る
   { host: 'nikkei.com', access: 'members', test: /この記事は会員限定記事です|class="paid-banner-title"/ },
+  // 朝日新聞：見出しの近くに「有料記事」の印（無料の記事には出ない）
+  { host: 'asahi.com', access: 'paid', test: />有料記事</ },
+  // 東洋経済：構造化データでも判定できるが、見出しの「有料会員限定」も見る
+  { host: 'toyokeizai.net', access: 'paid', test: /article-heading__member[^"]*--paid-lock/ },
 ];
 
 function hostOf(url) {

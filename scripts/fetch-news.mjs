@@ -117,6 +117,15 @@ function siteName(url) {
   }
 }
 
+// 相対リンクや「null/article/…」のような壊れたリンク（産経新聞の RSS など）を、フィードのサイトを基準に直す
+function absoluteUrl(link, base) {
+  try {
+    return new URL(link.replace(/^(null|undefined)\//, '/'), base).href;
+  } catch {
+    return link;
+  }
+}
+
 async function loadFeed(feed) {
   let text;
   try {
@@ -126,10 +135,10 @@ async function loadFeed(feed) {
     await new Promise((r) => setTimeout(r, 2000));
     ({ text } = await fetchText(feed.url));
   }
-  return parseFeed(text).map((item) => ({
-    ...item,
-    source: (feed.aggregator && siteName(item.url)) || feed.source,
-  }));
+  return parseFeed(text).map((item) => {
+    const url = absoluteUrl(item.url, feed.url);
+    return { ...item, url, source: (feed.aggregator && siteName(url)) || feed.source };
+  });
 }
 
 function metaContent(html, prop) {
@@ -187,6 +196,7 @@ async function inspectArticles(articles, previous) {
   await Promise.all(Array.from({ length: 10 }, worker));
   const restricted = articles.filter((a) => a.access).length;
   console.log(`記事ページ: 新しく ${ok}/${targets.length} 件を確認、${reused} 件は前回の結果を利用（有料・会員限定 ${restricted} 件）`);
+  for (const a of articles.filter((x) => x.access).slice(0, 12)) console.log(`  [${a.access === 'paid' ? '有料' : '会員限定'}] ${a.source}「${a.title.slice(0, 40)}」`);
 }
 
 // 前回公開したデータ（1 日以内のもの）。GitHub Actions では PREVIOUS_DATA_URL に公開先の URL が入る

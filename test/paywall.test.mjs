@@ -19,3 +19,9 @@ test('日本経済新聞の会員限定記事', () => {
   // 他のサイトでは日経の目印を使わない
   assert.equal(detectAccess(html, 'https://example.com/'), null);
 });
+
+test('朝日新聞・東洋経済の目印', () => {
+  assert.equal(detectAccess('<span class="x">有料記事</span>', 'https://www.asahi.com/articles/AST1.html'), 'paid');
+  assert.equal(detectAccess('<p>有料会員になると会員限定の<span>有料記事もお読みいただけます</span></p>', 'https://www.asahi.com/articles/AST2.html'), null);
+  assert.equal(detectAccess('<span class="article-heading__member --paid-lock">有料会員限定</span>', 'https://toyokeizai.net/articles/-/3'), 'paid');
+});
