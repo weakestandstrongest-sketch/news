@@ -241,9 +241,53 @@ function emptyHtml(icon, text) {
   return `<div class="empty">${icon}<div>${text}</div></div>`;
 }
 
+/* ---------- 本：今日の一冊 ---------- */
+function bookList() {
+  const books = state.data?.books;
+  if (!books?.today) return [];
+  return [books.today, ...(books.shelf || [])];
+}
+
+function bookMeta(b) {
+  return [b.book.author, b.book.pubdate].filter(Boolean).map(esc).join('・');
+}
+
+function bookTodayHtml() {
+  const [today, ...shelf] = bookList();
+  if (!today) return '';
+  return `<section class="book-today">
+    <h2 class="book-today-head">
+      <svg viewBox="0 0 48 24" aria-hidden="true"><path d="M2 21 24 6l22 15M10 21l14-9 14 9M18 21l6-4 6 4"/></svg>
+      今日の一冊
+    </h2>
+    <a class="book-today-main tap" href="${esc(safeUrl(today.url))}" data-article="${today.id}">
+      ${today.image ? `<img class="book-cover" src="${esc(today.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="book-cover is-blank"></div>'}
+      <div class="book-info">
+        <h3 class="book-title">${esc(today.title)}</h3>
+        <p class="book-meta">${bookMeta(today)}</p>
+        ${today.book.publisher ? `<p class="book-meta">${esc(today.book.publisher)}</p>` : ''}
+      </div>
+    </a>
+    ${today.summary ? `<p class="book-desc">${esc(today.summary)}</p>` : ''}
+    ${today.book.from ? `<a class="book-from tap" href="${esc(safeUrl(today.book.from.url))}" data-article="${today.book.from.id}">
+      <span class="cov-source">紹介記事・${esc(today.book.from.source)}</span>
+      <span class="cov-head">${esc(today.book.from.title)}</span>
+    </a>` : ''}
+  </section>
+  ${shelf.length ? `<section class="book-shelf">
+    <h3 class="book-shelf-head">記事で紹介された本</h3>
+    <div class="book-shelf-row">
+      ${shelf.map((b) => `<a class="book-shelf-item tap" href="${esc(safeUrl(b.url))}" data-article="${b.id}">
+        ${b.image ? `<img class="book-cover" src="${esc(b.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="book-cover is-blank"></div>'}
+        <span class="book-shelf-title">${esc(b.title)}</span>
+      </a>`).join('')}
+    </div>
+  </section>` : ''}`;
+}
+
 /* ---------- カテゴリページ ---------- */
 function categoryHtml(cat, isTop) {
-  let html = '';
+  let html = cat.id === 'books' ? bookTodayHtml() : '';
   if (isTop && state.data.sample) {
     html += `<p class="notice">サンプルデータを表示しています。GitHub Actions で公開すると、実際のニュースが自動で届くようになります。</p>`;
   }
@@ -478,6 +522,10 @@ function buildIndex() {
       if (!state.index.has(a.id)) state.index.set(a.id, { article: a, category: cat.label });
     }
   }
+  // 本（今日の一冊・記事で紹介された本）も、記事と同じように開いたり保存したりできるようにする
+  for (const b of bookList()) {
+    if (!state.index.has(b.id)) state.index.set(b.id, { article: b, category: '本' });
+  }
   state.topics.clear();
   for (const t of state.data.topics || []) {
     const articles = t.articleIds.map((id) => state.index.get(id)?.article).filter(Boolean);
@@ -598,15 +646,16 @@ function renderReader(id) {
       <div class="reader-kicker">${esc(entry.category || '')}</div>
       <h1 class="reader-title">${esc(a.title)}</h1>
       <div class="reader-meta">
+        ${a.book ? `<span>${bookMeta(a)}</span>` : ''}
         <span>${esc(a.source)}</span>
         ${a.publishedAt ? `<time>${fullDate(a.publishedAt)}</time>` : ''}
         ${a.score ? `<span class="pick">${a.score.toLocaleString()} users</span>` : ''}
       </div>
-      ${imgHtml(a.image, 'reader-img')}
+      ${a.book ? (a.image ? `<img class="book-cover reader-cover" src="${esc(a.image)}" alt="" referrerpolicy="no-referrer">` : '') : imgHtml(a.image, 'reader-img')}
       ${a.summary
         ? `<p class="reader-summary">${esc(a.summary)}</p>`
         : '<p class="reader-summary is-empty">この記事の概要はありません。元の記事でお読みください。</p>'}
-      <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">${esc(a.source)}で続きを読む ${ICON_EXTERNAL}</a>
+      <a class="btn-primary" href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">${a.book ? '本の詳しい情報を見る' : `${esc(a.source)}で続きを読む`} ${ICON_EXTERNAL}</a>
       <p class="reader-note">配信元のサイトが開きます</p>
       ${coverageHtml(a)}
       <div class="memo">
