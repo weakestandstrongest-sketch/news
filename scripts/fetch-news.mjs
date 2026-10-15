@@ -116,7 +116,14 @@ function siteName(url) {
 }
 
 async function loadFeed(feed) {
-  const { text } = await fetchText(feed.url);
+  let text;
+  try {
+    ({ text } = await fetchText(feed.url));
+  } catch {
+    // YouTube などは一時的に 404/500 を返すことがあるので、少し待って一度だけやり直す
+    await new Promise((r) => setTimeout(r, 2000));
+    ({ text } = await fetchText(feed.url));
+  }
   return parseFeed(text).map((item) => ({
     ...item,
     source: (feed.aggregator && siteName(item.url)) || feed.source,
@@ -156,6 +163,20 @@ async function enrichWithOgp(articles) {
   };
   await Promise.all(Array.from({ length: 10 }, worker));
   console.log(`OGP: ${ok}/${targets.length} 件を補完`);
+}
+
+// 前回公開したデータ（1 日以内のもの）。GitHub Actions では PREVIOUS_DATA_URL に公開先の URL が入る
+async function loadPrevious() {
+  const url = process.env.PREVIOUS_DATA_URL;
+  if (!url) return null;
+  try {
+    const data = JSON.parse((await fetchText(url, { timeout: 10000 })).text);
+    if (Date.now() - Date.parse(data.generatedAt) > 24 * 3600_000 || data.sample) return null;
+    return data;
+  } catch (err) {
+    console.warn(`前回のデータを読めませんでした: ${err.message}`);
+    return null;
+  }
 }
 
 function toArticle(item) {
@@ -200,6 +221,20 @@ async function main() {
       }
     });
     feedArticles.set(cat.id, items.map(toArticle));
+  }
+
+  // 取得に失敗したフィードがあるカテゴリは、前回公開したデータの記事で補う（公開中の news.json を読む）
+  const previous = await loadPrevious();
+  for (const cat of config.categories) {
+    const failedHere = (cat.feeds || []).filter((f) => failed.includes(f.url));
+    const prev = previous?.categories.find((c) => c.id === cat.id);
+    if (!failedHere.length || !prev) continue;
+    const sources = new Set(failedHere.map((f) => f.source));
+    const reused = prev.articles.filter((a) => sources.has(a.source)).map(({ topic, ...a }) => a);
+    if (reused.length) {
+      feedArticles.get(cat.id).push(...reused);
+      console.log(`  [${cat.label}] 前回のデータから ${reused.length} 件を補完`);
+    }
   }
 
   // 2. キーワードを指定したカテゴリは、取得した全記事から見出しが合うものも集める

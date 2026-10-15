@@ -26,9 +26,13 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: RSS を取得
         run: npm run fetch
-      - uses: actions/configure-pages@v5
+        env:
+          # 取得に失敗したフィードは、公開中の前回データで補う
+          PREVIOUS_DATA_URL: ${{ steps.pages.outputs.base_url }}/data/news.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
