@@ -137,7 +137,7 @@ async function loadFeed(feed) {
   }
   return parseFeed(text).map((item) => {
     const url = absoluteUrl(item.url, feed.url);
-    return { ...item, url, source: (feed.aggregator && siteName(url)) || feed.source };
+    return { ...item, url, source: (feed.aggregator && siteName(url)) || feed.source, via: feed.source };
   });
 }
 
@@ -224,6 +224,7 @@ function toArticle(item) {
     summary: truncate(item.summary, MAX_SUMMARY),
     image: toHttps(item.image, url),
     ...(item.score != null && { score: item.score }),
+    ...(item.via && item.via !== item.source && { via: item.via }), // はてブなどまとめ経由の記事は、取得に失敗したときの補完に使う
   };
 }
 
@@ -264,7 +265,12 @@ async function main() {
     const prev = previous?.categories.find((c) => c.id === cat.id);
     if (!failedHere.length || !prev) continue;
     const sources = new Set(failedHere.map((f) => f.source));
-    const reused = prev.articles.filter((a) => sources.has(a.source)).map(({ topic, ...a }) => a);
+    // まとめ（はてブなど）の記事は元サイト名で載っているので、via がない前回データでは「ほかのフィードの名前ではない記事」を使う
+    const aggFailed = failedHere.some((f) => f.aggregator);
+    const others = new Set((cat.feeds || []).filter((f) => !f.aggregator).map((f) => f.source));
+    const reused = prev.articles
+      .filter((a) => sources.has(a.via || a.source) || (aggFailed && !a.via && !others.has(a.source)))
+      .map(({ topic, ...a }) => a);
     if (reused.length) {
       feedArticles.get(cat.id).push(...reused);
       console.log(`  [${cat.label}] 前回のデータから ${reused.length} 件を補完`);

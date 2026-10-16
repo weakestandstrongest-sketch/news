@@ -1,5 +1,5 @@
 // アプリ本体はキャッシュ優先、ニュースデータはネットワーク優先（オフライン時は前回のデータ）
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL = `mynews-shell-${VERSION}`;
 const DATA = 'mynews-data';
 const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png'];
@@ -24,6 +24,8 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
+          // エラー（503 など）のときは、前に取れたニュースを使う。エラーで保存済みのニュースを上書きしない
+          if (!res.ok) return caches.match(url.pathname).then((hit) => hit || res);
           const copy = res.clone();
           caches.open(DATA).then((c) => c.put(url.pathname, copy));
           return res;

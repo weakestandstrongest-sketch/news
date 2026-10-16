@@ -61,7 +61,8 @@ export function stripHtml(html) {
   let s = decodeEntities(html);
   s = s.replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ');
   s = s.replace(/<br\s*\/?>|<\/p>/gi, ' ');
-  s = s.replace(/<[^>]+>/g, '');
+  // 本当の HTML タグだけ消す（「<独自>」「A < B でも C > D」のような見出しの文字は残す）
+  s = s.replace(/<\/?[a-zA-Z][a-zA-Z0-9-]*(\s[^<>]*)?\/?>|<!--[\s\S]*?-->/g, '');
   s = decodeEntities(s);
   // 全角スペースは見出しの区切りとして使われるので残す
   return s.replace(/[^\S\u3000]+/g, ' ').trim();
@@ -73,12 +74,17 @@ function cleanText(raw) {
 
 function parseDate(raw) {
   if (!raw) return null;
-  const d = new Date(raw.trim());
+  let t = raw.trim().replace(/\bJST\b/, '+0900'); // 「… 23:59:00 JST」は Date が読めない
+  // タイムゾーンのない日時（2026-10-16 09:00 など）は日本時間として読む（取り込みは UTC の環境で動くため）
+  const m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(t);
+  if (m) t = `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}T${(m[4] || '0').padStart(2, '0')}:${m[5] || '00'}:${m[6] || '00'}+09:00`;
+  const d = new Date(t);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
 function findImage(block, htmlBodies) {
-  const isImage = (a) => !a.type || a.type.startsWith('image');
+  // type のない enclosure は、音声・動画などの拡張子でなければ画像とみなす
+  const isImage = (a) => (a.type ? a.type.startsWith('image') : !/\.(mp3|m4a|aac|wav|ogg|mp4|mov|webm|pdf)(\?|$)/i.test(a.url || ''));
   const candidates = [
     tagAttr(block, 'media:thumbnail', 'url'),
     tagAttr(block, 'media:content', 'url', (a) => a.medium === 'image' || (a.type || '').startsWith('image')),

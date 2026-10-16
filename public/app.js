@@ -145,7 +145,8 @@ function applyTabs(ids) {
 }
 
 function lookup(id) {
-  return state.index.get(id) || state.saved[id] || null;
+  // 開いている記事は、更新で今日の一覧から外れても保存・メモできるように覚えておく
+  return state.index.get(id) || state.saved[id] || (state.readerEntry?.id === id ? state.readerEntry.entry : null);
 }
 
 /* ---------- 話題（複数メディアが報じた同じニュース） ---------- */
@@ -401,6 +402,8 @@ function renderNews() {
     .map((c, i) => `<button class="tab" role="tab" data-index="${i}" aria-selected="${i === state.current}">${esc(c.label)}</button>`)
     .join('');
 
+  // 描き直しても、それぞれのページの読んでいた位置はそのまま（自動更新や設定の変更で先頭に戻さない）
+  const tops = new Map([...el.pager.querySelectorAll('.page[data-cat]')].map((p) => [p.dataset.cat, p.scrollTop]));
   el.pager.innerHTML = cats
     .map((c, i) => `<div class="page scroll" data-cat="${c.id}" role="tabpanel">
       <div class="ptr"><span></span></div>
@@ -409,6 +412,7 @@ function renderNews() {
     .join('');
 
   el.pager.querySelectorAll('.page').forEach(setupPullToRefresh);
+  el.pager.querySelectorAll('.page[data-cat]').forEach((p) => { if (tops.get(p.dataset.cat)) p.scrollTop = tops.get(p.dataset.cat); });
   requestAnimationFrame(() => {
     el.pager.scrollLeft = state.current * el.pager.clientWidth;
     centerTab(state.current, false);
@@ -652,6 +656,7 @@ function coverageHtml(a) {
 function renderReader(id) {
   const entry = lookup(id);
   if (!entry) return false;
+  state.readerEntry = { id, entry };
   const a = entry.article;
   const saved = state.saved[id];
   const related = relatedFor(id);
@@ -694,13 +699,15 @@ function renderReader(id) {
 // iPhone / iPad では記事を開くときに履歴を足さない。足すと、端からのスワイプで
 // iOS 自身の「戻る」と凪の「スワイプで閉じる」が同時に動き、画面が2枚に重なって見える
 const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// ひび手帳の中（iframe）でも履歴を足さない（閉じたあとに戻る操作が 1 回空振りするため）
+const NO_PUSH = IOS || window.top !== window;
 let readerPushed = false;
 function openReader(id, { push = true } = {}) {
   if (!renderReader(id)) return;
   markRead(id);
   el.reader.classList.add('is-open');
   el.reader.setAttribute('aria-hidden', 'false');
-  if (push && !IOS) { history.pushState({ reader: id }, ''); readerPushed = true; }
+  if (push && !NO_PUSH) { history.pushState({ reader: id }, ''); readerPushed = true; }
 }
 
 function closeReader() {
@@ -714,7 +721,7 @@ function closeReader() {
 
 window.addEventListener('popstate', (e) => {
   const id = e.state?.reader;
-  if (id && lookup(id)) openReader(id, { push: false });
+  if (id && lookup(id)) { openReader(id, { push: false }); readerPushed = true; } // 進むで開いた記事も、閉じるときは履歴を戻す
   else if (state.readerId) closeReader();
 });
 
@@ -821,6 +828,7 @@ el.readerBody.addEventListener('input', (e) => {
       el.readerSave.setAttribute('aria-pressed', 'true');
       toast('メモと一緒に保存しました');
     }
+    if (!state.saved[id]) return;
     state.saved[id].memo = memo;
     persistSaved();
   }, 400);
@@ -867,8 +875,10 @@ el.readerBody.addEventListener('input', (e) => {
         if (readerPushed && history.state?.reader) history.back(); else closeReader();
         requestAnimationFrame(() => requestAnimationFrame(() => { R.style.transition = ''; R.classList.remove('is-dragging'); }));
       };
-      R.addEventListener('transitionend', finish, { once: true });
-      setTimeout(finish, 450);
+      // 中のボタンの色の変化などの transitionend では閉じない（スライドの途中で消えてしまう）
+      const onEnd = (ev) => { if (ev.target === R && ev.propertyName === 'transform') { R.removeEventListener('transitionend', onEnd); finish(); } };
+      R.addEventListener('transitionend', onEnd);
+      setTimeout(() => { R.removeEventListener('transitionend', onEnd); finish(); }, 450);
     } else {
       R.classList.remove('is-dragging');
       R.style.transition = 'transform .3s cubic-bezier(.25,.8,.3,1)';
@@ -945,13 +955,12 @@ document.querySelector('.tabbar').addEventListener('click', (e) => {
 });
 
 /* ---------- 検索 ---------- */
+// 元の文字で探してから、かけらごとにエスケープする（エスケープ後の HTML や前の <mark> を壊さない）
 function highlight(text, terms) {
-  let html = esc(text);
-  for (const term of terms) {
-    const re = new RegExp(esc(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    html = html.replace(re, (m) => `<mark>${m}</mark>`);
-  }
-  return html;
+  const list = terms.filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!list.length) return esc(text);
+  const re = new RegExp(`(${list.join('|')})`, 'gi');
+  return String(text).split(re).map((part, i) => (i % 2 ? `<mark>${esc(part)}</mark>` : esc(part))).join('');
 }
 
 function renderSearch() {
