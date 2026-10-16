@@ -1,5 +1,5 @@
 // アプリ本体はキャッシュ優先、ニュースデータはネットワーク優先（オフライン時は前回のデータ）
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL = `mynews-shell-${VERSION}`;
 const DATA = 'mynews-data';
 const ASSETS = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/apple-touch-icon.png'];
