@@ -822,16 +822,18 @@ el.readerBody.addEventListener('input', (e) => {
 });
 
 // 端から右へスワイプして閉じる（ホーム画面アプリには戻るジェスチャーがないため）
+// 指を離したら、その位置からそのまま右へ流して閉じる（いったん戻ってから閉じると、がくっと見える）
 (() => {
-  let sx = null, sy = 0, dx = 0, dragging = false;
-  el.reader.addEventListener('touchstart', (e) => {
+  let sx = null, sy = 0, dx = 0, t0 = 0, dragging = false, raf = 0;
+  const R = el.reader;
+  const paint = () => { raf = 0; R.style.transform = `translate3d(${Math.max(0, dx)}px,0,0)`; };
+  R.addEventListener('touchstart', (e) => {
     const t = e.touches[0];
     sx = t.clientX < 32 ? t.clientX : null;
-    sy = t.clientY;
-    dx = 0;
+    sy = t.clientY; dx = 0; t0 = Date.now();
     dragging = false;
   }, { passive: true });
-  el.reader.addEventListener('touchmove', (e) => {
+  R.addEventListener('touchmove', (e) => {
     if (sx == null) return;
     const t = e.touches[0];
     dx = t.clientX - sx;
@@ -839,17 +841,38 @@ el.readerBody.addEventListener('input', (e) => {
       if (Math.abs(t.clientY - sy) > Math.abs(dx)) { sx = null; return; }
       if (dx < 8) return;
       dragging = true;
-      el.reader.classList.add('is-dragging');
+      R.classList.add('is-dragging');
     }
-    el.reader.style.transform = `translateX(${Math.max(0, dx)}px)`;
+    if (!raf) raf = requestAnimationFrame(paint);
   }, { passive: true });
-  el.reader.addEventListener('touchend', () => {
-    if (!dragging) return;
-    el.reader.classList.remove('is-dragging');
-    el.reader.style.transform = '';
-    if (dx > 90) $('#reader-back').click();
+  const end = () => {
     sx = null;
-  });
+    if (!dragging) return;
+    dragging = false; cancelAnimationFrame(raf); raf = 0;
+    const w = R.offsetWidth || innerWidth, fast = dx > 30 && dx / Math.max(1, Date.now() - t0) > 0.45;
+    if (dx > Math.min(110, w * .3) || fast) {
+      const left = Math.max(0, (w - dx) / w);
+      R.style.transition = `transform ${(0.12 + left * 0.2).toFixed(2)}s cubic-bezier(.25,.8,.3,1)`;
+      R.style.transform = `translate3d(${w}px,0,0)`;
+      let done = false;
+      const finish = () => {
+        if (done) return; done = true;
+        // the page is already off screen: close without another slide
+        R.style.transition = 'none';
+        if (history.state?.reader) history.back(); else closeReader();
+        requestAnimationFrame(() => requestAnimationFrame(() => { R.style.transition = ''; R.classList.remove('is-dragging'); }));
+      };
+      R.addEventListener('transitionend', finish, { once: true });
+      setTimeout(finish, 450);
+    } else {
+      R.classList.remove('is-dragging');
+      R.style.transition = 'transform .3s cubic-bezier(.25,.8,.3,1)';
+      R.style.transform = '';
+      setTimeout(() => { if (!dragging) R.style.transition = ''; }, 320);
+    }
+  };
+  R.addEventListener('touchend', end);
+  R.addEventListener('touchcancel', end);
 })();
 
 /* ---------- 記事タップ（全画面共通） ---------- */
