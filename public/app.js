@@ -691,15 +691,20 @@ function renderReader(id) {
   return true;
 }
 
+// iPhone / iPad では記事を開くときに履歴を足さない。足すと、端からのスワイプで
+// iOS 自身の「戻る」と凪の「スワイプで閉じる」が同時に動き、画面が2枚に重なって見える
+const IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let readerPushed = false;
 function openReader(id, { push = true } = {}) {
   if (!renderReader(id)) return;
   markRead(id);
   el.reader.classList.add('is-open');
   el.reader.setAttribute('aria-hidden', 'false');
-  if (push) history.pushState({ reader: id }, '');
+  if (push && !IOS) { history.pushState({ reader: id }, ''); readerPushed = true; }
 }
 
 function closeReader() {
+  readerPushed = false;
   el.reader.classList.remove('is-open');
   el.reader.setAttribute('aria-hidden', 'true');
   el.reader.style.transform = '';
@@ -714,7 +719,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 $('#reader-back').addEventListener('click', () => {
-  if (history.state?.reader) history.back();
+  if (readerPushed && history.state?.reader) history.back();
   else closeReader();
 });
 
@@ -859,7 +864,7 @@ el.readerBody.addEventListener('input', (e) => {
         if (done) return; done = true;
         // the page is already off screen: close without another slide
         R.style.transition = 'none';
-        if (history.state?.reader) history.back(); else closeReader();
+        if (readerPushed && history.state?.reader) history.back(); else closeReader();
         requestAnimationFrame(() => requestAnimationFrame(() => { R.style.transition = ''; R.classList.remove('is-dragging'); }));
       };
       R.addEventListener('transitionend', finish, { once: true });
@@ -888,7 +893,7 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   if (state.readerId) {
     // 詳細画面内の関連記事は同じ画面で切り替える
-    history.replaceState({ reader: card.dataset.article }, '');
+    if (readerPushed) history.replaceState({ reader: card.dataset.article }, '');
     renderReader(card.dataset.article);
     markRead(card.dataset.article);
   } else {
