@@ -933,6 +933,7 @@ function showView(name) {
     v.classList.toggle('is-active', on);
   });
   document.querySelectorAll('.tabbar-item').forEach((b) => b.classList.toggle('is-active', b.dataset.target === name));
+  tabbarSlide();
   el.app.classList.toggle('is-sub', name !== 'news');
 
   if (name === 'news') {
@@ -949,6 +950,21 @@ function showView(name) {
   }
 }
 
+// 下のバー：選んだ欄へ、丸が滑っていき、ぷにっと伸び縮みする（communication の下のバーと同じ動き）
+let tabbarAt = 0; // ニュース（一番左）から始まる
+function tabbarSlide() {
+  const bar = document.querySelector('.tabbar'), hl = bar.querySelector('.tabbar-hl'), j = hl.firstElementChild;
+  const to = [...bar.querySelectorAll('.tabbar-item')].findIndex((b) => b.classList.contains('is-active'));
+  const from = tabbarAt; tabbarAt = to;
+  hl.style.transform = `translateX(${from * 100}%)`;
+  requestAnimationFrame(() => requestAnimationFrame(() => { hl.style.transform = `translateX(${to * 100}%)`; }));
+  if (from !== to && j.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    j.animate([
+      { transform: 'scale(1, 1)' }, { transform: 'scale(1.32, 0.84)', offset: 0.28 }, { transform: 'scale(0.94, 1.1)', offset: 0.58 },
+      { transform: 'scale(1.03, 0.98)', offset: 0.8 }, { transform: 'scale(1, 1)' },
+    ], { duration: 560, easing: 'cubic-bezier(0.3, 0.9, 0.4, 1)' });
+  }
+}
 document.querySelector('.tabbar').addEventListener('click', (e) => {
   const btn = e.target.closest('.tabbar-item');
   if (btn) showView(btn.dataset.target);

@@ -642,51 +642,69 @@ mark {
 .danger { color: #b3402f; }
 .setting.is-button { width: 100%; text-align: left; }
 
-/* ===== 下部タブバー（iOS のような、浮いた半透明のバー） ===== */
+/* ===== 下部タブバー（communication の下のバーと同じ作り：透ける丸いガラス・伸びる丸いハイライト） ===== */
 .tabbar {
   position: fixed;
   left: 50%;
   bottom: max(10px, calc(var(--safe-bottom) - 10px));
   z-index: 5;
   display: flex;
-  gap: 2px;
+  height: 64px;
   width: calc(100% - 28px);
   max-width: 440px;
-  padding: 5px;
-  border-radius: 34px;
-  transform: translateX(-50%);
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid var(--glass-edge);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .14), 0 1px 2px rgba(0, 0, 0, .06), inset 0 1px 0 var(--glass-shine);
+  padding: 4px;
+  border-radius: 32px;
+  transform: translateX(-50%) translateZ(0);
+  will-change: transform;
+  background: color-mix(in srgb, var(--bg) 58%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--line), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+
+/* 選んだ欄へ滑っていく丸（transform は app.js が動かす） */
+.tabbar-hl {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / 4);
+  pointer-events: none;
+  transition: transform 620ms cubic-bezier(.34, 1.45, .5, 1);
+}
+.tabbar-hl > i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  box-shadow: inset 0 0 0 .5px var(--line);
 }
 
 .tabbar-item {
+  position: relative;
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 1px;
-  padding: 7px 0 6px;
-  border-radius: 28px;
-  font-size: 10.5px;
+  border-radius: 999px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: .04em;
-  color: var(--ink-2);
-  transition: background-color .25s var(--ease), color .2s;
+  color: var(--ink-3);
+  transition: color .2s;
 }
 
-.tabbar-item .icon { width: 25px; height: 25px; }
+.tabbar-item .icon { width: 22px; height: 22px; }
 
-.tabbar-item.is-active {
-  color: var(--accent);
-  background: var(--glass-active);
-}
+.tabbar-item.is-active { color: var(--ink); }
 
-.tabbar-item.is-active .icon { stroke-width: 1.9; }
+.tabbar-item.is-active .icon { stroke-width: 2.3; }
 
-.tabbar-item:active { transform: scale(.96); }
+.tabbar-item:active { transform: scale(.94); }
 
 /* ===== 記事詳細 ===== */
 .reader {
