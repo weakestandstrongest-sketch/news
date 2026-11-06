@@ -22,6 +22,12 @@
       const s = JSON.parse(localStorage.getItem('mynews:settings') || '{}');
       if (s.theme && s.theme !== 'auto') document.documentElement.dataset.theme = s.theme;
       if (s.fontSize) document.documentElement.dataset.fontSize = s.fontSize;
+      // ひび手帳の中で開いたときは、ひび手帳の明るさに合わせて黒い背景にする
+      const q = new URLSearchParams(location.search);
+      if (window.parent !== window && q.get('embed') === 'hibi') {
+        document.documentElement.classList.add('in-hibi');
+        if (/^(dark|light)$/.test(q.get('theme') || '')) document.documentElement.dataset.theme = q.get('theme');
+      }
     } catch {}
   </script>
 </head>

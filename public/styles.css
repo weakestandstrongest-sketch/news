@@ -1376,3 +1376,14 @@ mark {
   line-height: 1.7;
   color: var(--ink-2);
 }
+
+/* ===== ひび手帳の中で開いたとき（?embed=hibi&theme=dark）：ひび手帳のカレンダーと同じ黒 ===== */
+:root.in-hibi[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #101012;
+  --sunken: #1C1C1D;
+  --line: #303034;
+  --raised: #2C2C2E;
+  --glass: rgba(44, 44, 48, .5);
+  --sheet: rgba(28, 28, 29, .96);
+}

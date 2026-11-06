@@ -1029,7 +1029,9 @@ function renderSaved() {
 function applySettings() {
   const root = document.documentElement;
   const s = state.settings;
-  if (s.theme === 'auto') delete root.dataset.theme;
+  const hibi = root.classList.contains('in-hibi') && new URLSearchParams(location.search).get('theme');
+  if (hibi === 'dark' || hibi === 'light') root.dataset.theme = hibi; // ひび手帳の中ではひび手帳の明るさに合わせる
+  else if (s.theme === 'auto') delete root.dataset.theme;
   else root.dataset.theme = s.theme;
   if (s.fontSize === 'medium') delete root.dataset.fontSize;
   else root.dataset.fontSize = s.fontSize;
