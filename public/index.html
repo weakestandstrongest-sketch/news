@@ -128,5 +128,47 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="app.js" type="module"></script>
+<!-- ひび手帳（iPhone アプリ版）の中で開いたとき：下のバーを iPhone 本物の部品（Liquid Glass）にしてもらう。ここのバーは見えなくするだけ（場所はそのまま） -->
+<style>html.hibi-nbar .tabbar{opacity:0!important}</style>
+<script>
+(function () {
+  if (window.parent === window) return;
+  var on = false, last = '', raf = 0, C = { bar: '.tabbar', items: '.tabbar .tabbar-item', label: 'span', key: function (el) { return el.dataset.target; }, active: function (el) { return el.classList.contains('is-active'); }, sym: { news: 'newspaper', search: 'magnifyingglass', saved: 'bookmark', settings: 'gearshape' } };
+  var items = function () { return Array.prototype.slice.call(document.querySelectorAll(C.items)); };
+  var keyOf = function (el, i) { return C.key ? C.key(el, i) : 'i' + i; };
+  function state() {
+    var list = items(), bar = document.querySelector(C.bar), hidden = !bar || !list.length || !bar.getClientRects().length;
+    if (!hidden) {
+      // something (an article, a sheet) is over our bar: then the iPhone's bar should go away too
+      var probe = list.filter(C.active)[0] || list[0], r = probe.getBoundingClientRect();
+      var hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      hidden = !hit || !bar.contains(hit) || r.top > innerHeight;
+    }
+    var sel = '';
+    var tabs = list.map(function (el, i) { var k = keyOf(el, i); if (C.active(el)) sel = k; var t = el.querySelector(C.label); return { key: k, title: (t ? t.textContent : el.textContent).trim(), symbol: C.sym[k] || 'circle' }; });
+    var fab = C.fab && document.querySelector(C.fab);
+    return { type: 'hibi:bar', tabs: tabs, selected: sel, fab: fab && fab.getClientRects().length ? C.fabSym : '', fabLabel: fab ? (fab.getAttribute('aria-label') || '') : '', hidden: hidden };
+  }
+  function send() { raf = 0; if (!on) return; var s = state(), j = JSON.stringify(s); if (j !== last) { last = j; parent.postMessage(s, '*'); } }
+  function soon() { if (on && !raf) raf = requestAnimationFrame(send); }
+  var mo = new MutationObserver(soon);
+  addEventListener('message', function (e) {
+    var d = e.data; if (e.source !== parent || !d) return;
+    if (d.type === 'hibi:nbar') {
+      on = !!d.on; last = '';
+      document.documentElement.classList.toggle('hibi-nbar', on);
+      mo.disconnect();
+      if (on) { mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'aria-hidden', 'hidden', 'style', 'aria-current'] }); soon(); }
+    } else if (d.type === 'hibi:tap' && on) {
+      var el = d.fab ? document.querySelector(C.fab) : items().filter(function (x, i) { return keyOf(x, i) === d.key; })[0];
+      if (el) el.click();
+      soon();
+    }
+  });
+  addEventListener('hashchange', soon);
+  setInterval(soon, 500);
+  parent.postMessage({ type: 'hibi:bar-hello' }, '*');
+})();
+</script>
 </body>
 </html>
